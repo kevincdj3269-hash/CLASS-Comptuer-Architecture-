@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-Bit Binary Subtraction Design with Examples</title>
+    <style>
+        :root {
+            --primary: #1a5276;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #e67e22;
+            --danger: #c0392b;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --code-bg: #2d2d2d;
+            --bit-color: #e74c3c;
+            --gate-fa: #e67e22;
+            --gate-ha: #f1c40f;
+            --gate-xor: #9b59b6;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        }
+        header {
+            background: linear-gradient(135deg, var(--accent), #2980b9);
+            color: white;
+            text-align: center;
+            padding: 45px 25px;
+        }
+        header h1 {
+            font-size: 2.6em;
+            margin-bottom: 12px;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+        header p {
+            font-size: 1.25em;
+            opacity: 0.95;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .content {
+            padding: 45px;
+        }
+        h2 {
+            color: var(--primary);
+            border-bottom: 4px solid var(--accent);
+            padding-bottom: 12px;
+            margin: 40px 0 25px;
+            font-size: 1.9em;
+            position: relative;
+        }
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 80px;
+            height: 4px;
+            background: var(--success);
+        }
+        h3 {
+            color: #16a085;
+            margin: 30px 0 18px;
+            font-size: 1.5em;
+            border-left: 5px solid #16a085;
+            padding-left: 15px;
+        }
+        .card {
+            background: var(--light);
+            border-radius: 15px;
+            padding: 28px;
+            margin: 28px 0;
+            border-left: 6px solid var(--accent);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+        }
+        pre {
+            background: var(--code-bg);
+            color: #f8f8f2;
+            padding: 22px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1.02em;
+            line-height: 1.7;
+            margin: 18px 0;
+            border: 1px solid #444;
+            position: relative;
+        }
+        pre::before {
+            content: 'BINARY SUBTRACTION';
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 0.7em;
+            color: #666;
+            font-weight: bold;
+        }
+        code {
+            background: #e8f4fc;
+            color: #2980b9;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 22px 0;
+            font-family: monospace;
+            font-size: 1.05em;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th {
+            background: var(--accent);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            border: 1px solid #ddd;
+            padding: 14px;
+            text-align: center;
+            background: #fdfdfd;
+            transition: background 0.3s ease;
+        }
+        td:hover {
+            background: #f0f8ff;
+        }
+        .bit {
+            font-weight: bold;
+            color: var(--bit-color);
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            letter-spacing: 1.5px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            background: #fdf2f2;
+        }
+        .borrow {
+            color: var(--danger);
+            font-weight: bold;
+            background: #ffebee;
+        }
+        .highlight {
+            background: #fffacd !important;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { background-color: #fffacd; }
+            50% { background-color: #ffeb3b; }
+        }
+        .gate {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin: 3px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .gate-fa { background: var(--gate-fa); }
+        .gate-ha { background: var(--gate-ha); color: #2c3e50; }
+        .gate-xor { background: var(--gate-xor); }
+        .diagram {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px dashed var(--accent);
+            text-align: center;
+            font-family: monospace;
+            margin: 25px 0;
+            font-size: 1.1em;
+            line-height: 2;
+            position: relative;
+        }
+        .diagram::before {
+            content: '4-BIT SUBTRACTOR';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .sub-matrix {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .sub-cell {
+            background: #e3f2fd;
+            padding: 14px;
+            text-align: center;
+            border-radius: 8px;
+            border: 1px solid #90caf9;
+        }
+        .sub-cell.header {
+            background: #1976d2;
+            color: white;
+        }
+        .result {
+            background: linear-gradient(120deg, #c8e6c9, #a5d6a7);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--success);
+            border: 3px dashed var(--success);
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.25);
+        }
+        .resource-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        }
+        .resource-table th {
+            background: var(--danger);
+        }
+        .note {
+            background: #fff8e1;
+            border-left: 6px solid var(--warning);
+            padding: 18px;
+            border-radius: 0 12px 12px 0;
+            margin: 25px 0;
+            font-style: italic;
+            color: #8d6e63;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .verilog {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #f8f8f2;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .verilog h3 {
+            color: #1abc9c;
+            margin-bottom: 15px;
+        }
+        footer {
+            text-align: center;
+            padding: 35px;
+            background: var(--dark);
+            color: white;
+            font-size: 0.95em;
+        }
+        @media (max-width: 768px) {
+            .content { padding: 25px; }
+            header h1 { font-size: 2em; }
+            .sub-matrix { grid-template-columns: 1fr; }
+            table { font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>4-Bit Binary Subtraction Design</h1>
+        <p>Complete Hardware Implementation Using Full Adders & 2’s Complement – Step-by-Step Examples</p>
+    </header>
+
+    <div class="content">
+
+        <div class="card">
+            <h2>Overview</h2>
+            <p><strong>Binary subtraction</strong> is performed using <strong>2’s complement addition</strong>. Instead of direct subtraction, we convert the subtrahend to its negative (2’s complement) and add it to the minuend.</p>
+            
+            <div class="note">
+                <strong>Key Principle:</strong><br>
+                A − B = A + (−B) = A + (2’s complement of B)<br>
+                This allows reuse of <strong>adder circuits</strong> for subtraction.
+            </div>
+        </div>
+
+        <h2>4-Bit Subtractor Architecture</h2>
+        <div class="card">
+            <h3>Inputs & Outputs</h3>
+            <ul>
+                <li><strong>A[3:0]</strong>: Minuend (4 bits)</li>
+                <li><strong>B[3:0]</strong>: Subtrahend (4 bits)</li>
+                <li><strong>Diff[3:0]</strong>: Difference (4 bits)</li>
+                <li><strong>Borrow_out</strong>: Final borrow (overflow/underflow flag)</li>
+            </ul>
+
+            <h3>Components Used</h3>
+            <div class="resource-table">
+                <table>
+                    <tr><th>Component</th><th>Count</th><th>Purpose</th></tr>
+                    <tr><td><span class="gate gate-fa">Full Adder</span></td><td><strong>4</strong></td><td>Perform A + (~B) + 1</td></tr>
+                    <tr><td><span class="gate gate-xor">XOR Gate</span></td><td><strong>4</strong></td><td>Invert B bits (for 2’s complement)</td></tr>
+                    <tr><td colspan="2"><strong>Total Delay</strong></td><td><strong>~2 × T_FA</strong></td></tr>
+                </table>
+            </div>
+
+            <h3>Block Diagram</h3>
+            <div class="diagram">
+                A3 A2 A1 A0<br>
+                − B3 B2 B1 B0<br>
+                ─────────────<br>
+                <strong>Step 1:</strong> ~B (invert all bits)<br>
+                <strong>Step 2:</strong> Add 1 → 2’s complement of B<br>
+                <strong>Step 3:</strong> Add A + (2’s comp B) using 4-bit ripple adder<br>
+                → Diff[3:0], Borrow_out
+            </div>
+        </div>
+
+        <h2>Manual Subtraction (Paper Method)</h2>
+        <div class="card">
+            <h3>Rules (Like Decimal)</h3>
+            <ul>
+                <li>If Aᵢ ≥ Bᵢ → Diffᵢ = Aᵢ − Bᵢ, Borrow = 0</li>
+                <li>If Aᵢ < Bᵢ → Diffᵢ = (Aᵢ + 2) − Bᵢ, Borrow = 1 (borrow from next bit)</li>
+            </ul>
+
+            <div class="sub-matrix">
+                <div class="sub-cell header">Bit</div>
+                <div class="sub-cell header">A</div>
+                <div class="sub-cell header">B</div>
+                <div class="sub-cell header">Borrow_in</div>
+                <div class="sub-cell header">Diff</div>
+                <div class="sub-cell header">Borrow_out</div>
+                <div class="sub-cell header">3</div>
+                <div class="sub-cell bit">1</div>
+                <div class="sub-cell bit">0</div>
+                <div class="sub-cell">0</div>
+                <div class="sub-cell bit">1</div>
+                <div class="sub-cell">0</div>
+                <div class="sub-cell header">2</div>
+                <div class="sub-cell bit">0</div>
+                <div class="sub-cell bit">1</div>
+                <div class="sub-cell borrow">1</div>
+                <div class="sub-cell bit">1</div>
+                <div class="sub-cell">1</div>
+                <div class="sub-cell header">1</div>
+                <div class="sub-cell bit">1</div>
+                <div class="sub-cell bit">0</div>
+                <div class="sub-cell">0</div>
+                <div class="sub-cell bit">1</div>
+                <div class="sub-cell">0</div>
+                <div class="sub-cell header">0</div>
+                <div class="sub-cell bit">0</div>
+                <div class="sub-cell bit">1</1></div>
+                <div class="sub-cell">0</div>
+                <div class="sub-cell bit">1</div>
+                <div class="sub-cell">1</div>
+            </div>
+            <p><strong>Result:</strong> <span class="bit">1011</span> − <span class="bit">0110</span> = <span class="bit">0101</span> (5)</p>
+        </div>
+
+        <h2>Example 1: 13 − 6 = 7</h2>
+        <div class="card">
+            <p><strong>Inputs:</strong><br>
+               A = <span class="bit">1101</span> (13)<br>
+               B = <span class="bit">0110</span> (6)</p>
+
+            <h3>Method 1: Direct Subtraction (Borrow Method)</h3>
+            <pre>
+    1 1 0 1   (13)
+  − 0 1 1 0   (6)
+  ─────────
+    0 1 1 1   (7)
+            </pre>
+
+            <h3>Method 2: 2’s Complement Addition</h3>
+            <pre>
+Step 1: ~B = ~(0110) = 1001
+Step 2: 2’s comp B = 1001 + 1 = 1010
+Step 3: A + (−B) = 1101 + 1010 = 0111 (7)
+            </pre>
+
+            <div class="result">
+                Difference = <span class="bit">0111</span> = 7 Correct!
+            </div>
+        </div>
+
+        <h2>Example 2: 5 − 9 = −4 (Signed)</h2>
+        <div class="card">
+            <p><strong>A = <span class="bit">0101</span> (5), B = <span class="bit">1001</span> (9)</strong></p>
+
+            <h3>2’s Complement Subtraction</h3>
+            <pre>
+~B = ~(1001) = 0110
+2’s comp B = 0110 + 1 = 0111
+A + (−B) = 0101 + 0111 = 1100 → −4 in 2’s complement
+            </pre>
+
+            <div class="result">
+                Result = <span class="bit">1100</span> = −4 Correct!
+            </div>
+        </div>
+
+        <h2>Hardware: 4-Bit Subtractor Circuit</h2>
+        <div class="card">
+            <h3>Using Full Adders</h3>
+            <pre>
+// Each bit: Diff_i = A_i ⊕ B_i ⊕ Borrow_in
+// Borrow_out = (~A_i & B_i) | (~A_i & Borrow_in) | (B_i & Borrow_in)
+            </pre>
+
+            <h3>Control Signal (Sub = 1 for subtract)</h3>
+            <pre>
+B_in_to_adder = B_i ⊕ Sub
+Carry_in_0 = Sub  (1 for subtract, 0 for add)
+            </pre>
+        </div>
+
+        <h2>Verilog HDL Code</h2>
+        <div class="verilog">
+            <h3>4-Bit Subtractor using Adder</h3>
+            <pre>
+// 4-bit Subtractor (A - B)
+module subtractor_4bit (
+    input  [3:0] A, B,
+    input  sub,           // 1 = subtract, 0 = add
+    output [3:0] Diff,
+    output Borrow_out
+);
+
+    wire [3:0] B_comp;
+    wire c0, c1, c2, c3;
+
+    // XOR B with sub control
+    assign B_comp = B ^ {4{sub}};
+
+    // Carry-in = sub (1 for subtract)
+    assign c0 = sub;
+
+    // Ripple carry using full adders
+    full_adder fa0 (.a(A[0]), .b(B_comp[0]), .cin(c0),       .sum(Diff[0]), .cout(c1));
+    full_adder fa1 (.a(A[1]), .b(B_comp[1]), .cin(c1),       .sum(Diff[1]), .cout(c2));
+    full_adder fa2 (.a(A[2]), .b(B_comp[2]), .cin(c2),       .sum(Diff[2]), .cout(c3));
+    full_adder fa3 (.a(A[3]), .b(B_comp[3]), .cin(c3),       .sum(Diff[3]), .cout(Borrow_out));
+
+endmodule
+            </pre>
+        </div>
+
+        <h2>Overflow Detection</h2>
+        <div class="card">
+            <table>
+                <tr><th>Condition</th><th>Meaning</th></tr>
+                <tr><td>A and B positive, Diff negative</td><td>Underflow</td></tr>
+                <tr><td>A and B negative, Diff positive</td><td>Overflow</td></tr>
+                <tr><td>Borrow_out ≠ Carry into MSB</td><td>Overflow occurred</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Try It Yourself!</h3>
+            <p>Compute: <span class="bit">1010</span> − <span class="bit">0111</span></p>
+            <p><em>Answer: 10 − 7 = 3 → <span class="bit">0011</span></em></p>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>4-Bit Binary Subtraction Design – Complete Educational Resource</p>
+        <p>Generated on November 14, 2025 | Perfect for Digital Logic, Computer Architecture, and VLSI Courses</p>
+    </footer>
+</div>
+
+</body>
+</html>

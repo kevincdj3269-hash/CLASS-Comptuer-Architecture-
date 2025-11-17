@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>4-Bit Binary Divider Design with Examples</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      line-height: 1.7;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    h1 span {
+      font-size: 0.7em;
+      color: #7f8c8d;
+    }
+    .subtitle {
+      text-align: center;
+      color: #3498db;
+      font-style: italic;
+      margin-bottom: 30px;
+    }
+    section {
+      margin-bottom: 40px;
+      padding: 20px;
+      border-left: 5px solid #3498db;
+      background: #f9fbfd;
+      border-radius: 0 8px 8px 0;
+    }
+    h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 8px;
+    }
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 14px;
+    }
+    code {
+      font-family: 'Courier New', monospace;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-family: monospace;
+      font-size: 16px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #3498db;
+      color: white;
+    }
+    .step { background: #ecf0f1; font-weight: bold; }
+    .reg-a { background: #fef9e7; }
+    .reg-q { background: #e8f5e9; }
+    .op { font-size: 13px; }
+    .highlight {
+      background: #fff3cd;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .circuit {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .circuit img {
+      max-width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .note {
+      background: #e7f3ff;
+      padding: 12px;
+      border-left: 4px solid #3498db;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.95em;
+      margin: 15px 0;
+    }
+    .example {
+      background: #f8fff8;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px dashed #27ae60;
+      margin: 15px 0;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      color: #7f8c8d;
+      font-size: 0.9em;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      margin: 10px 5px;
+      font-weight: bold;
+    }
+    .btn:hover {
+      background: #2980b9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>4-Bit Binary Divider Design <span>Non-Restoring Algorithm</span></h1>
+    <p class="subtitle">Hardware Implementation • Step-by-Step Examples • Interactive Simulation</p>
+
+    <section>
+      <h2>1. Overview</h2>
+      <p>A <strong>4-bit binary divider</strong> performs integer division on two binary numbers:</p>
+      <ul>
+        <li><strong>Dividend</strong>: 4-bit (0 to 15)</li>
+        <li><strong>Divisor</strong>: 1 to 4 bits (1 to 15, non-zero)</li>
+        <li><strong>Output</strong>: 4-bit Quotient + 4-bit Remainder</li>
+      </ul>
+      <p>Uses <strong>Non-Restoring Division</strong> — efficient for hardware, avoids full restoration on every negative result.</p>
+    </section>
+
+    <section>
+      <h2>2. Hardware Architecture</h2>
+      <div class="circuit">
+        <pre>
+    +-------------------+     +-------------------+
+    |     4-bit A       |     |     4-bit Q       |
+    | (Accumulator)     |     | (Quotient)        |
+    +--------+----------+     +--------+----------+
+             |                       |
+             +-----------+-----------+
+                         |
+                   +-----v-----+     +--------+
+                   |  4-bit   |     | Clock  |
+                   |  Shifter |<----+ Enable |
+                   +-----+-----+     +--------+
+                         |
+             +-----------v-----------+
+             |       Subtractor       |
+             |      A ← A - M         |
+             +-----------+-----------+
+                         |
+               +---------+---------+
+               |                   |
+          +----v-----+        +----v-----+
+          |   4-bit  |        |   4-bit  |
+          |   M Reg  |        | Control  |
+          | (Divisor)|        |  Unit    |
+          +----------+        +----------+
+        </pre>
+        <p><strong>Registers:</strong> A (remainder), Q (quotient), M (divisor)<br>
+           <strong>Operations:</strong> Shift left (AQ), Subtract (A-M), Conditional Add (restore)</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Non-Restoring Division Algorithm</h2>
+      <ol>
+        <li>Initialize: A = 0, Q = Dividend, M = Divisor</li>
+        <li><strong>Repeat 4 times</strong> (for 4-bit):
+          <ol>
+            <li>Left shift [A:Q] by 1 bit</li>
+            <li>A ← A - M</li>
+            <li>If A ≥ 0 → Q₀ = 1<br>
+                If A &lt; 0 → Q₀ = 0, then A ← A + M (restore)</li>
+          </ol>
+        </li>
+        <li>Final: Q = Quotient, A = Remainder</li>
+      </ol>
+      <div class="note">
+        <strong>Advantage:</strong> Only adds back M when needed → fewer operations than restoring method.
+      </div>
+    </section>
+
+    <section>
+      <h2>4. Example 1: 1101 ÷ 0011 (13 ÷ 3)</h2>
+      <div class="example">
+        <p><strong>Input:</strong> Dividend = <span class="highlight">1101</span> (13), Divisor = <span class="highlight">0011</span> (3)</p>
+
+        <table>
+          <tr>
+            <th>Step</th>
+            <th>Shift [A:Q]</th>
+            <th>A ← A - M</th>
+            <th>A Result</th>
+            <th>Q₀</th>
+            <th>Restore?</th>
+            <th>Final [A:Q]</th>
+          </tr>
+          <tr>
+            <td class="step">Init</td>
+            <td>—</td>
+            <td>—</td>
+            <td>0000</td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="reg-a">0000</span> <span class="reg-q">1101</span></td>
+          </tr>
+          <tr>
+            <td class="step">1</td>
+            <td>0001 1010</td>
+            <td>0001 - 0011</td>
+            <td>1110</td>
+            <td>0</td>
+            <td>Yes</td>
+            <td><span class="reg-a">0011</span> <span class="reg-q">1010</span></td>
+          </tr>
+          <tr>
+            <td class="step">2</td>
+            <td>0111 0100</td>
+            <td>0111 - 0011</td>
+            <td>0100</td>
+            <td>1</td>
+            <td>No</td>
+            <td><span class="reg-a">0100</span> <span class="reg-q">0101</span></td>
+          </tr>
+          <tr>
+            <td class="step">3</td>
+            <td>1000 1010</td>
+            <td>1000 - 0011</td>
+            <td>0101</td>
+            <td>0</td>
+            <td>Yes</td>
+            <td><span class="reg-a">0011</span> <span class="reg-q">1010</span></td>
+          </tr>
+          <tr>
+            <td class="step">4</td>
+            <td>0111 0100</td>
+            <td>0111 - 0011</td>
+            <td>0100</td>
+            <td>1</td>
+            <td>No</td>
+            <td><span class="reg-a">0100</span> <span class="reg-q">0100</span></td>
+          </tr>
+        </table>
+
+        <p style="text-align:center; font-size:18px; margin:20px 0;">
+          <strong>Result:</strong><br>
+          Quotient = <span class="highlight">0100</span> = 4<sub>10</sub><br>
+          Remainder = <span class="highlight">0100</span> = 1<sub>10</sub><br>
+          <em>13 ÷ 3 = 4 remainder 1</em>
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. Example 2: 1010 ÷ 0010 (10 ÷ 2)</h2>
+      <div class="example">
+        <p><strong>Input:</strong> Dividend = <span class="highlight">1010</span>, Divisor = <span class="highlight">0010</span></p>
+
+        <table>
+          <tr><th>Step</th><th>Shift</th><th>A-M</th><th>A</th><th>Q₀</th><th>Restore</th><th>[A:Q]</th></tr>
+          <tr><td class="step">0</td><td>—</td><td>—</td><td>0000</td><td>—</td><td>—</td><td>0000 1010</td></tr>
+          <tr><td class="step">1</td><td>0001 0100</td><td>0001-0010</td><td>1111</td><td>0</td><td>Yes → 0001</td><td>0001 0100</td></tr>
+          <tr><td class="step">2</td><td>0010 1000</td><td>0010-0010</td><td>0000</td><td>1</td><td>No</td><td>0000 1001</td></tr>
+          <tr><td class="step">3</td><td>0001 0010</td><td>0001-0010</td><td>1111</td><td>0</td><td>Yes → 0001</td><td>0001 0010</td></tr>
+          <tr><td class="step">4</td><td>0010 0100</td><td>0010-0010</td><td>0000</td><td>1</td><td>No</td><td>0000 0101</td></tr>
+        </table>
+
+        <p style="text-align:center; font-size:18px; margin:20px 0;">
+          <strong>Result:</strong><br>
+          Quotient = <span class="highlight">0101</span> = 5<sub>10</sub><br>
+          Remainder = <span class="highlight">0000</span> = 0<sub>10</sub><br>
+          <em>10 ÷ 2 = 5 remainder 0</em>
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. Interactive Simulator</h2>
+      <p>Try your own 4-bit division below:</p>
+      <div style="text-align:center; margin:20px 0;">
+        <label><strong>Dividend (4-bit):</strong></label>
+        <input type="text" id="dividend" maxlength="4" value="1101" style="width:80px; text-align:center; font-family:monospace; font-size:16px; padding:8px; margin:0 10px;" />
+        
+        <label><strong>Divisor (1-4 bit):</strong></label>
+        <input type="text" id="divisor" maxlength="4" value="11" style="width:80px; text-align:center; font-family:monospace; font-size:16px; padding:8px; margin:0 10px;" />
+        
+        <button onclick="runSim()" style="padding:10px 20px; background:#27ae60; color:white; border:none; border-radius:6px; cursor:pointer;">Run Division</button>
+      </div>
+      <div id="sim-output" style="margin-top:20px;"></div>
+    </section>
+
+    <div style="text-align:center; margin:30px 0;">
+      <a href="#" class="btn" onclick="downloadPDF()">Download PDF Version</a>
+      <a href="4bit-divider-sim.html" class="btn" target="_blank">Open Full Simulator</a>
+    </div>
+
+    <div class="footer">
+      <p>4-Bit Binary Divider Design • Non-Restoring Algorithm • Digital Logic Education</p>
+      <p>Generated on November 15, 2025</p>
+    </div>
+  </div>
+
+  <script>
+    function runSim() {
+      const dvd = document.getElementById('dividend').value.trim();
+      const dvs = document.getElementById('divisor').value.trim();
+      const out = document.getElementById('sim-output');
+      
+      if (!/^[01]{4}$/.test(dvd)) {
+        out.innerHTML = `<p style="color:red;">Dividend must be 4-bit binary!</p>`;
+        return;
+      }
+      if (!/^[01]{1,4}$/.test(dvs) || parseInt(dvs,2) === 0) {
+        out.innerHTML = `<p style="color:red;">Divisor must be non-zero 1–4 bit binary!</p>`;
+        return;
+      }
+
+      let A = 0, Q = parseInt(dvd, 2), M = parseInt(dvs.padEnd(4,'0'), 2);
+      let steps = [`<table style="width:100%; font-size:14px; margin:10px 0;"><tr><th>Step</th><th>A</th><th>Q</th><th>Op</th></tr>`];
+
+      for (let i = 0; i < 4; i++) {
+        let shiftAQ = ((A << 1) & 0b1111) | ((Q >> 3) & 1);
+        A = (A << 1) & 0b1111;
+        Q = (Q << 1) & 0b1111;
+        let temp = (A - M) & 0b1111;
+        let neg = (A - M) < 0;
+        A = temp;
+        let q0 = neg ? 0 : 1;
+        Q = (Q & 0b1110) | q0;
+        if (neg) A = (A + M) & 0b1111;
+
+        steps.push(`<tr>
+          <td>${i+1}</td>
+          <td>${A.toString(2).padStart(4,'0')}</td>
+          <td>${Q.toString(2).padStart(4,'0')}</td>
+          <td class="op">${neg ? 'A-M (neg) → Q₀=0 → restore' : 'A-M → Q₀=1'}</td>
+        </tr>`);
+      }
+      steps.push(`</table>`);
+      steps.push(`<p><strong>Quotient:</strong> ${Q.toString(2).padStart(4,'0')} = ${Q}<sub>10</sub></p>`);
+      steps.push(`<p><strong>Remainder:</strong> ${A.toString(2).padStart(4,'0')} = ${A}<sub>10</sub></p>`);
+      out.innerHTML = steps.join('');
+    }
+
+    function downloadPDF() {
+      alert('PDF export feature coming soon! Copy this page or print to PDF.');
+    }
+
+    // Auto-run first example
+    window.onload = () => runSim();
+  </script>
+</body>
+</html>

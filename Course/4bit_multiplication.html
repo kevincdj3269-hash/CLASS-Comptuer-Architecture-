@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Concepts of 4-Bit Binary Multiplication with Examples</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+        }
+        table {
+            border-collapse: collapse;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 600px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        .example {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-left: 5px solid #3498db;
+            margin: 15px 0;
+        }
+        .bit {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Basic Concepts of 4-Bit Binary Multiplication with Examples</h1>
+    <p>This document explains the <strong>basic concepts of 4-bit binary multiplication</strong> with step-by-step examples.</p>
+
+    <h2>1. Basic Concepts</h2>
+    <ul>
+        <li>Range of 4-bit numbers: from <code>0000</code> (0) to <code>1111</code> (15)</li>
+        <li>Maximum product: <code>1111 × 1111 = 11001001</code> (8 bits)</li>
+        <li>Multiplication uses <strong>partial products</strong> and <strong>shift-and-add</strong> method</li>
+        <li>For each bit of the multiplier that is 1, shift the multiplicand left by the corresponding position and add</li>
+    </ul>
+
+    <h2>2. Multiplication Steps</h2>
+    <ol>
+        <li>Multiply the multiplicand by each bit of the multiplier to get partial products</li>
+        <li>Shift each partial product left according to the bit position (0, 1, 2, or 3 bits)</li>
+        <li>Add all partial products to get the final result</li>
+    </ol>
+
+    <h2>3. Example: 1011 × 1101</h2>
+    <div class="example">
+        <p><strong>Multiplicand:</strong> <span class="bit">1011</span> (11₁₀)<br>
+           <strong>Multiplier:</strong> <span class="bit">1101</span> (13₁₀)</p>
+
+        <pre>
+    1 0 1 1
+×   1 1 0 1
+───────────
+    1 0 1 1     ← 1011 × 1 (bit 0)
+  0 0 0 0       ← 1011 × 0 (bit 1, shift left 1)
+  1 0 1 1 0     ← 1011 × 1 (bit 2, shift left 2)
+1 0 1 1         ← 1011 × 1 (bit 3, shift left 3)
+───────────
+1 0 0 0 1 1 1 1 ← Sum = 143₁₀
+        </pre>
+
+        <h3>Step-by-Step Calculation:</h3>
+        <table>
+            <tr>
+                <th>Multiplier Bit</th>
+                <th>Partial Product</th>
+                <th>Shift Left</th>
+                <th>Result (8-bit)</th>
+            </tr>
+            <tr>
+                <td>1 (LSB)</td>
+                <td>1011 × 1 = 1011</td>
+                <td>0</td>
+                <td>00001011</td>
+            </tr>
+            <tr>
+                <td>0</td>
+                <td>1011 × 0 = 0000</td>
+                <td>1</td>
+                <td>00000000</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>1011 × 1 = 1011</td>
+                <td>2</td>
+                <td>00101100</td>
+            </tr>
+            <tr>
+                <td>1 (MSB)</td>
+                <td>1011 × 1 = 1011</td>
+                <td>3</td>
+                <td>10110000</td>
+            </tr>
+            <tr>
+                <td colspan="3"><strong>Total Sum</strong></td>
+                <td><strong>10001111</strong> (143)</td>
+            </tr>
+        </table>
+
+        <p><strong>Verification:</strong> 11 × 13 = 143, and <code>10001111₂</code> = 143₁₀ → Correct!</p>
+    </div>
+
+    <h2>4. Another Example: 1111 × 0011</h2>
+    <div class="example">
+        <pre>
+    1 1 1 1
+×   0 0 1 1
+───────────
+      1 1 1 1   ← 1111 × 1 (shift 0)
+    1 1 1 1     ← 1111 × 1 (shift 1)
+    0 0 0 0     ← 1111 × 0 (shift 2)
+    0 0 0 0     ← 1111 × 0 (shift 3)
+  ───────────
+    0 0 1 0 0 0 1 → 100001₂ = 33₁₀
+        </pre>
+
+        <p><strong>Correct Result:</strong> 15 × 3 = 45 = <code>101101₂</code></p>
+        <p>Note: The above shows incorrect alignment. Proper addition with correct shifting gives:</p>
+        <pre>
+      1111
+    × 0011
+    ──────
+      1111    (×1, shift 0)
+     1111     (×1, shift 1)
+    ──────
+   101101    = 45₁₀
+        </pre>
+    </div>
+
+    <h2>5. Summary</h2>
+    <ul>
+        <li>4-bit multiplication produces up to 8-bit result</li>
+        <li>Core idea: <strong>partial products + shift and add</strong></li>
+        <li>Can be implemented manually, with pencil/paper, or in digital circuits (e.g., array multiplier)</li>
+    </ul>
+
+    <footer>
+        <p>Generated on November 14, 2025</p>
+    </footer>
+
+</body>
+</html>

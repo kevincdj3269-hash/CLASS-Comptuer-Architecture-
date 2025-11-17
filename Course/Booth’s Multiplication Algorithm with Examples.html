@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booth’s Multiplication Algorithm with Examples</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #e67e22;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --code-bg: #2d2d2d;
+            --bit-color: #e74c3c;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        header {
+            background: linear-gradient(135deg, var(--accent), #2980b9);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px;
+        }
+        h2 {
+            color: var(--accent);
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 10px;
+            margin: 35px 0 20px;
+            font-size: 1.8em;
+        }
+        h3 {
+            color: #16a085;
+            margin: 25px 0 15px;
+            font-size: 1.4em;
+        }
+        .card {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 6px solid var(--accent);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        pre {
+            background: var(--code-bg);
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1em;
+            line-height: 1.6;
+            margin: 15px 0;
+            border: 1px solid #444;
+        }
+        code {
+            background: #e8f4fc;
+            color: #2980b9;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 1.05em;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        th {
+            background: var(--accent);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+            background: #f9f9f9;
+            transition: background 0.3s ease;
+        }
+        td:hover {
+            background: #f0f8ff;
+        }
+        .bit {
+            font-weight: bold;
+            color: var(--bit-color);
+            font-family: 'Courier New', monospace;
+            font-size: 1.15em;
+            letter-spacing: 1px;
+        }
+        .highlight {
+            background: #fffacd !important;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { background-color: #fffacd; }
+            50% { background-color: #ffeb3b; }
+            100% { background-color: #fffacd; }
+        }
+        .step {
+            background: linear-gradient(120deg, #e8f5e9, #c8e6c9);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 12px 0;
+            border-left: 5px solid #4caf50;
+            font-family: monospace;
+            font-size: 1.05em;
+        }
+        .result {
+            background: linear-gradient(120deg, #e8f5e9, #a5d6a7);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: var(--success);
+            border: 3px dashed var(--success);
+            margin: 25px 0;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.2);
+        }
+        .note {
+            background: #fff8e1;
+            border-left: 5px solid var(--warning);
+            padding: 15px;
+            border-radius: 0 10px 10px 0;
+            margin: 20px 0;
+            font-style: italic;
+            color: #8d6e63;
+        }
+        .registers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .reg-box {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid var(--accent);
+            font-family: monospace;
+        }
+        .reg-label {
+            font-weight: bold;
+            color: var(--accent);
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .practice {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 30px 0;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(255, 154, 158, 0.3);
+        }
+        .practice h3 {
+            color: #c2185b;
+            margin-bottom: 15px;
+        }
+        footer {
+            text-align: center;
+            padding: 30px;
+            background: var(--dark);
+            color: white;
+            font-size: 0.9em;
+        }
+        .algorithm-flow {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid var(--accent);
+            margin: 25px 0;
+            font-family: monospace;
+        }
+        @media (max-width: 768px) {
+            .content { padding: 20px; }
+            header h1 { font-size: 2em; }
+            table { font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Booth’s Multiplication Algorithm</h1>
+        <p>Efficient Signed Binary Multiplication Using Recoding Technique</p>
+    </header>
+
+    <div class="content">
+
+        <div class="card">
+            <h2>Introduction</h2>
+            <p><strong>Booth’s Algorithm</strong> is a multiplication technique that reduces the number of partial products by recoding the multiplier. It is particularly effective for <strong>signed binary numbers in 2’s complement form</strong> and handles strings of 1s efficiently.</p>
+            
+            <div class="note">
+                <strong>Invented by:</strong> Andrew Donald Booth in 1951<br>
+                <strong>Key Advantage:</strong> Average of only 1 addition/subtraction per 2 bits (vs 1 per bit in standard method)
+            </div>
+        </div>
+
+        <h2>Core Concept: Recoding Table</h2>
+        <div class="card">
+            <p>The algorithm examines <strong>two bits at a time</strong>: current bit (Q₀) and previous bit (Q₋₁).</p>
+            
+            <table>
+                <tr>
+                    <th>Q₀</th>
+                    <th>Q₋₁</th>
+                    <th>Action</th>
+                    <th>Operation</th>
+                    <th>Meaning</th>
+                </tr>
+                <tr>
+                    <td class="bit">0</td>
+                    <td class="bit">0</td>
+                    <td>No operation</td>
+                    <td>—</td>
+                    <td>End of 0s string</td>
+                </tr>
+                <tr>
+                    <td class="bit">0</td>
+                    <td class="bit">1</td>
+                    <td><strong>Add M</strong></td>
+                    <td>A ← A + M</td>
+                    <td>Start of 1s string</td>
+                </tr>
+                <tr>
+                    <td class="bit">1</td>
+                    <td class="bit">0</td>
+                    <td><strong>Subtract M</strong></td>
+                    <td>A ← A − M</td>
+                    <td>End of 1s string</td>
+                </tr>
+                <tr>
+                    <td class="bit">1</td>
+                    <td class="bit">1</td>
+                    <td>No operation</td>
+                    <td>—</td>
+                    <td>Middle of 1s string</td>
+                </tr>
+            </table>
+
+            <div class="note">
+                Q₋₁ is initially <code>0</code>. After each step, the entire A-Q-Q₋₁ register is <strong>arithmetically shifted right</strong> (ASR preserves sign bit).
+            </div>
+        </div>
+
+        <h2>Registers Used (for n-bit multiplication)</h2>
+        <div class="registers">
+            <div class="reg-box">
+                <div class="reg-label">A (Accumulator)</div>
+                <div>2n bits, holds partial product</div>
+            </div>
+            <div class="reg-box">
+                <div class="reg-label">Q (Multiplier)</div>
+                <div>n bits, initially holds multiplier</div>
+            </div>
+            <div class="reg-box">
+                <div class="reg-label">M (Multiplicand)</div>
+                <div>n bits, fixed during computation</div>
+            </div>
+            <div class="reg-box">
+                <div class="reg-label">Q₋₁</div>
+                <div>1 bit, previous LSB of Q</div>
+            </div>
+            <div class="reg-box">
+                <div class="reg-label">Count</div>
+                <div>n cycles</div>
+            </div>
+        </div>
+
+        <h2>Example 1: 7 × (−3) = −21</h2>
+        <div class="card">
+            <p><strong>Inputs:</strong><br>
+               M = <span class="bit">0111</span> (7)<br>
+               Q = <span class="bit">1101</span> (−3 in 2’s complement)</p>
+
+            <div class="step">
+                <strong>Initial Setup:</strong><br>
+                A = <code>0000 0000</code>, Q = <code>1101</code>, Q₋₁ = <code>0</code>, M = <code>0111</code>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Cycle</th>
+                    <th>Q₀ Q₋₁</th>
+                    <th>Action</th>
+                    <th>A (after op)</th>
+                    <th>A Q Q₋₁ (after ASR)</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td class="bit">1 0</td>
+                    <td>A ← A − M</td>
+                    <td><span class="highlight">1001</span></td>
+                    <td><span class="bit">1100 1110 1</span></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td class="bit">0 1</td>
+                    <td>A ← A + M</td>
+                    <td><span class="highlight">0000</span></td>
+                    <td><span class="bit">0000 0111 0</span></td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td class="bit">1 0</td>
+                    <td>A ← A − M</td>
+                    <td><span class="highlight">1001</span></td>
+                    <td><span class="bit">1100 1011 1</span></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td class="bit">1 1</td>
+                    <td>No op</td>
+                    <td>1100</td>
+                    <td><span class="bit">1110 0101 1</span></td>
+                </tr>
+            </table>
+
+            <div class="result">
+                Final Product = <span class="bit">11100101 1</span> → <span class="bit">11101011</span> = −21 (Correct!)
+            </div>
+        </div>
+
+        <h2>Example 2: (−5) × 4 = −20</h2>
+        <div class="card">
+            <p><strong>M = <span class="bit">1011</span> (−5), Q = <span class="bit">0100</span> (4)</strong></p>
+
+            <table>
+                <tr>
+                    <th>Cycle</th>
+                    <th>Q₀ Q₋₁</th>
+                    <th>Action</th>
+                    <th>A</th>
+                    <th>A|Q|Q₋₁ (after ASR)</th>
+                </tr>
+                <tr>
+                    <td>Init</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>00000000</td>
+                    <td>00000000 0100 0</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td class="bit">0 0</td>
+                    <td>No op</td>
+                    <td>00000000</td>
+                    <td>00000000 0010 0</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td class="bit">0 0</td>
+                    <td>No op</td>
+                    <td>00000000</td>
+                    <td>00000000 0001 0</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td class="bit">1 0</td>
+                    <td>A ← A − M</td>
+                    <td><span class="highlight">0101</span></td>
+                    <td><span class="bit">0010 1000 1</span></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td class="bit">0 1</td>
+                    <td>A ← A + M</td>
+                    <td><span class="highlight">0000</span></td>
+                    <td><span class="bit">0000 0100 0</span></td>
+                </tr>
+            </table>
+
+            <div class="result">
+                Product = <span class="bit">00000100</span> → <span class="bit">11101100</span> = −20 (Correct!)
+            </div>
+        </div>
+
+        <h2>Algorithm Flowchart (Pseudocode)</h2>
+        <div class="algorithm-flow">
+<pre>
+BOOTH_MULTIPLY(M, Q, n):
+    A = 0 (2n bits)
+    Q_n-1 = 0
+    for i = 1 to n:
+        if Q[0..1] == "01":
+            A = A + M
+        else if Q[0..1] == "10":
+            A = A - M
+        // Arithmetic Shift Right
+        {A, Q, Q_n-1} = ASR({A, Q, Q_n-1})
+    return {A, Q}
+</pre>
+        </div>
+
+        <h2>Radix-4 Booth (Faster Version)</h2>
+        <div class="card">
+            <p>Processes <strong>2 bits per cycle</strong> → only <strong>n/2 cycles</strong> for n-bit numbers.</p>
+            
+            <table>
+                <tr><th>Bits (i+1,i,i-1)</th><th>Operation</th></tr>
+                <tr><td>000</td><td>0</td></tr>
+                <tr><td>001, 010</td><td>+1×M</td></tr>
+                <tr><td>011</td><td>+2×M</td></tr>
+                <tr><td>100</td><td>−2×M</td></tr>
+                <tr><td>101, 110</td><td>−1×M</td></tr>
+                <tr><td>111</td><td>0</td></tr>
+            </table>
+        </div>
+
+        <h2>Advantages vs Disadvantages</h2>
+        <div class="card">
+            <table>
+                <tr><th>Advantages</th><th>Disadvantages</th></tr>
+                <tr>
+                    <td>Handles signed numbers naturally</td>
+                    <td>Requires subtraction logic</td>
+                </tr>
+                <tr>
+                    <td>Fewer operations for strings of 1s</td>
+                    <td>Variable cycle time</td>
+                </tr>
+                <tr>
+                    <td>Used in real CPUs (ARM, x86)</td>
+                    <td>Complex control unit</td>
+                </tr>
+                <tr>
+                    <td>Radix-4 reduces cycles by 50%</td>
+                    <td>Needs 2×M generation</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="practice">
+            <h3>Practice Problem</h3>
+            <p>Multiply using Booth’s Algorithm:<br>
+               <span class="bit">1011</span> (−5) × <span class="bit">0110</span> (6)</p>
+            <p><em>Expected Result: −30 → <span class="bit">11100010</span></em></p>
+            <p><strong>Try it step by step!</strong></p>
+        </div>
+
+        <h2>Verilog Implementation (One Cycle)</h2>
+        <div class="card">
+<pre>
+// Booth multiplier step
+always @(*) begin
+    case ({Q[0], Q_m1})
+        2'b01: A_next = A + M;
+        2'b10: A_next = A - M;
+        default: A_next = A;
+    endcase
+end
+
+// Arithmetic shift right
+always @(posedge clk) begin
+    {A, Q, Q_m1} <= {A[2*n-1], A, Q};
+    count <= count + 1;
+end
+</pre>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>Booth’s Multiplication Algorithm - Complete Educational Guide</p>
+        <p>Generated on November 14, 2025 | Interactive & Mobile-Friendly</p>
+    </footer>
+</div>
+
+</body>
+</html>

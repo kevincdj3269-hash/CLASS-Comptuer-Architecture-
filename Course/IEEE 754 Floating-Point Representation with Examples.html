@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IEEE 754 Floating-Point Representation with Examples</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        .bit-field {
+            font-family: monospace;
+            background-color: #ecf0f1;
+            padding: 8px;
+            border-radius: 4px;
+            display: inline-block;
+            font-size: 1.1em;
+        }
+        .highlight {
+            background-color: #fffacd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 1em;
+        }
+        code {
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: Consolas, monospace;
+        }
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+
+<h1>IEEE 754 Floating-Point Representation</h1>
+
+<p>IEEE 754 is the international standard for representing floating-point numbers in binary, widely used in modern computer systems to represent real numbers.</p>
+
+<h2>Structure (Single Precision Example)</h2>
+
+<table>
+    <tr>
+        <th>Field</th>
+        <th>Bits</th>
+        <th>Position</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td>Sign Bit</td>
+        <td>1 bit</td>
+        <td>Bit 31</td>
+        <td>0 = positive, 1 = negative</td>
+    </tr>
+    <tr>
+        <td>Exponent</td>
+        <td>8 bits</td>
+        <td>Bits 30–23</td>
+        <td>Biased exponent (Bias = 127)</td>
+    </tr>
+    <tr>
+        <td>Mantissa (Significand)</td>
+        <td>23 bits</td>
+        <td>Bits 22–0</td>
+        <td>Fractional part after normalization (hidden leading 1)</td>
+    </tr>
+</table>
+
+<h2>Value Calculation Formula</h2>
+<p>Single-precision floating-point value:</p>
+<pre>
+(-1)<sup>sign</sup> × 2<sup>(exponent - 127)</sup> × (1.mantissa)<sub>2</sub>
+</pre>
+
+<hr>
+
+<h2>Example 1: Convert 6.5 to IEEE 754 Single Precision</h2>
+
+<ol>
+    <li><strong>Binary representation:</strong> 6.5 = 110.1<sub>(2)</sub></li>
+    <li><strong>Normalize:</strong> 1.101 × 2<sup>2</sup></li>
+    <li><strong>Sign bit:</strong> Positive → <span class="highlight">0</span></li>
+    <li><strong>Exponent:</strong> 2 + 127 = 129 → 10000001<sub>(2)</sub> → <span class="highlight">10000001</span></li>
+    <li><strong>Mantissa:</strong> 101 → pad to 23 bits → <span class="highlight">10100000000000000000000</span></li>
+</ol>
+
+<p><strong>Full 32-bit representation:</strong></p>
+<div class="bit-field">
+    <span style="color: #e74c3c;">0</span> | 
+    <span style="color: #3498db;">10000001</span> | 
+    <span style="color: #2ecc71;">10100000000000000000000</span>
+</div>
+
+<p><strong>Hexadecimal:</strong> <code>0x40D00000</code></p>
+
+<hr>
+
+<h2>Example 2: Convert -2.25 to IEEE 754 Single Precision</h2>
+
+<ol>
+    <li>2.25 = 10.01<sub>(2)</sub> = 1.001 × 2<sup>1</sup></li>
+    <li>Sign: Negative → <span class="highlight">1</span></li>
+    <li>Exponent: 1 + 127 = 128 → 10000000</li>
+    <li>Mantissa: 001 → 00100000000000000000000</li>
+</ol>
+
+<div class="bit-field">
+    <span style="color: #e74c3c;">1</span> | 
+    <span style="color: #3498db;">10000000</span> | 
+    <span style="color: #2ecc71;">00100000000000000000000</span>
+</div>
+
+<p><strong>Hexadecimal:</strong> <code>0xC0100000</code></p>
+
+<hr>
+
+<h2>Special Values</h2>
+
+<table>
+    <tr>
+        <th>Value</th>
+        <th>Sign</th>
+        <th>Exponent</th>
+        <th>Mantissa</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td>+0</td>
+        <td>0</td>
+        <td>00000000</td>
+        <td>All 0s</td>
+        <td>Positive zero</td>
+    </tr>
+    <tr>
+        <td>-0</td>
+        <td>1</td>
+        <td>00000000</td>
+        <td>All 0s</td>
+        <td>Negative zero</td>
+    </tr>
+    <tr>
+        <td>+∞</td>
+        <td>0</td>
+        <td>11111111</td>
+        <td>All 0s</td>
+        <td>Positive infinity</td>
+    </tr>
+    <tr>
+        <td>-∞</td>
+        <td>1</td>
+        <td>11111111</td>
+        <td>All 0s</td>
+        <td>Negative infinity</td>
+    </tr>
+    <tr>
+        <td>NaN</td>
+        <td>x</td>
+        <td>11111111</td>
+        <td>Non-zero</td>
+        <td>Not a Number</td>
+    </tr>
+</table>
+
+<hr>
+
+<h2>Double Precision</h2>
+<ul>
+    <li>Total: 64 bits</li>
+    <li>Sign: 1 bit</li>
+    <li>Exponent: 11 bits (Bias = 1023)</li>
+    <li>Mantissa: 52 bits</li>
+</ul>
+
+<p>Formula: <code>(-1)^s × 2^(e-1023) × (1.m)</code></p>
+
+<hr>
+
+<footer>
+    <p>Generated on: <span id="date"></span></p>
+    <script>
+        document.getElementById("date").textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+    </script>
+</footer>
+
+</body>
+</html>

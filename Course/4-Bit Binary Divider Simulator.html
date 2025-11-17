@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>4-Bit Binary Divider Simulator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fa;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .input-group {
+      margin: 20px 0;
+      text-align: center;
+    }
+    label {
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    input {
+      padding: 8px;
+      width: 100px;
+      font-size: 16px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      margin-left: 10px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .division-table {
+      margin: 30px auto;
+      border-collapse: collapse;
+      font-family: monospace;
+      font-size: 18px;
+    }
+    .division-table td, .division-table th {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      text-align: center;
+    }
+    .dividend { background: #f9f9d9; }
+    .quotient { background: #d9f9d9; font-weight: bold; }
+    .remainder { background: #ffd9d9; }
+    .step { color: #7f8c8d; font-size: 14px; }
+    .error {
+      color: red;
+      text-align: center;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>4-Bit Binary Divider Simulator</h1>
+    <div class="input-group">
+      <label>Dividend (4-bit binary):</label>
+      <input type="text" id="dividend" maxlength="4" placeholder="ex: 1101" />
+      <label>Divisor (1~4-bit binary):</label>
+      <input type="text" id="divisor" maxlength="4" placeholder="ex: 11" />
+      <button onclick="calculate()">Calculate Division</button>
+    </div>
+    <div id="error" class="error"></div>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    function calculate() {
+      const dividendInput = document.getElementById('dividend').value.trim();
+      const divisorInput = document.getElementById('divisor').value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultDiv = document.getElementById('result');
+      
+      errorDiv.textContent = '';
+      resultDiv.innerHTML = '';
+
+      // Validate input
+      if (!/^[01]{4}$/.test(dividendInput)) {
+        errorDiv.textContent = 'Dividend must be exactly 4-bit binary!';
+        return;
+      }
+      if (!/^[01]{1,4}$/.test(divisorInput) || divisorInput === '0000') {
+        errorDiv.textContent = 'Divisor must be 1~4-bit non-zero binary!';
+        return;
+      }
+
+      const dividend = parseInt(dividendInput, 2);
+      const divisor = parseInt(divisorInput.padEnd(4, '0'), 2);
+      const divisorStr = divisorInput;
+
+      // Non-restoring division algorithm
+      let A = 0;  // Accumulator (remainder register)
+      let Q = dividend;  // Quotient register
+      let M = divisor;   // Divisor
+      let n = 4;  // 4 cycles for 4-bit
+      let steps = [];
+
+      for (let i = 0; i < n; i++) {
+        // Step 1: Left shift A and Q
+        let shiftedA = (A << 1) & 0b1111;
+        let q0 = (Q >> 3) & 1;
+        let shiftedQ = ((Q << 1) & 0b1110) | q0;
+        A = shiftedA;
+        Q = (Q << 1) & 0b1111;
+
+        // Step 2: A = A - M
+        let temp = A - M;
+        let negative = temp < 0;
+        A = temp & 0b1111;
+
+        // Step 3: Set least significant bit of Q
+        let qBit = negative ? 0 : 1;
+        Q = (Q & 0b1110) | qBit;
+
+        // Step 4: If negative, restore A by adding M
+        if (negative) {
+          A = (A + M) & 0b1111;
+        }
+
+        // Record step
+        steps.push({
+          step: i + 1,
+          A: A.toString(2).padStart(4, '0'),
+          Q: Q.toString(2).padStart(4, '0'),
+          operation: negative 
+            ? `A ← A - M (negative) → Q₀=0 → A ← A + M (restore)` 
+            : `A ← A - M (positive) → Q₀=1`,
+          negative: negative
+        });
+      }
+
+      const quotient = Q;
+      const remainder = A;
+
+      // Generate HTML table
+      let table = `
+        <table class="division-table">
+          <tr>
+            <th class="step">Step</th>
+            <th>A (Accumulator)</th>
+            <th>Q (Quotient)</th>
+            <th>Operation</th>
+          </tr>
+      `;
+
+      steps.forEach(s => {
+        table += `
+          <tr>
+            <td class="step">${s.step}</td>
+            <td>${s.A}</td>
+            <td>${s.Q}</td>
+            <td style="font-size:14px;">${s.operation}</td>
+          </tr>
+        `;
+      });
+
+      table += `
+        </table>
+        <div style="margin-top:20px; text-align:center; font-size:18px;">
+          <p><strong>Final Result:</strong></p>
+          <p>Quotient: <span class="quotient">${quotient.toString(2).padStart(4,'0')}</span> 
+             = ${quotient}<sub>10</sub></p>
+          <p>Remainder: <span class="remainder">${remainder.toString(2).padStart(4,'0')}</span> 
+             = ${remainder}<sub>10</sub></p>
+          <p><em>Verification: ${dividendInput}<sub>2</sub> ÷ ${divisorStr}<sub>2</sub> 
+             = ${quotient}<sub>10</sub> remainder ${remainder}<sub>10</sub></em></p>
+        </div>
+      `;
+
+      resultDiv.innerHTML = table;
+    }
+
+    // Default example: 1101 ÷ 11 (13 ÷ 3)
+    window.onload = () => {
+      document.getElementById('dividend').value = '1101';
+      document.getElementById('divisor').value = '11';
+      calculate();
+    };
+  </script>
+</body>
+</html>

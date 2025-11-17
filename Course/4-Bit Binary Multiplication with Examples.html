@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-Bit Binary Multiplication with Examples</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            margin: 25px;
+            background-color: #f5f9ff;
+            color: #2c3e50;
+        }
+        h1, h2, h3 {
+            color: #1a5276;
+        }
+        h1 {
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px dashed #3498db;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+        pre {
+            background: #2c3e3e;
+            color: #f8f8f2;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1em;
+            line-height: 1.4;
+        }
+        code {
+            background: #e8f4fc;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.95em;
+            color: #2980b9;
+        }
+        table {
+            border-collapse: collapse;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #bdc3c7;
+            padding: 12px;
+            text-align: center;
+            font-family: monospace;
+        }
+        th {
+            background-color: #2980b9;
+            color: white;
+            font-weight: bold;
+        }
+        .example {
+            background: linear-gradient(120deg, #eaf7ff, #d6eaf8);
+            padding: 20px;
+            border-left: 6px solid #3498db;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        .bit {
+            font-weight: bold;
+            color: #e74c3c;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+        }
+        .step {
+            background: #fff9e6;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #f1c40f;
+        }
+        .result {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #27ae60;
+            background: #e8f8f5;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            margin: 15px 0;
+        }
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>4-Bit Binary Multiplication with Examples</h1>
+    <p>This page explains <strong>how to multiply two 4-bit binary numbers</strong> step-by-step, just like long multiplication in decimal — but in base-2!</p>
+
+    <h2>1. What is 4-Bit Multiplication?</h2>
+    <ul>
+        <li>Each number is 4 bits: from <code>0000</code> (0) to <code>1111</code> (15)</li>
+        <li>Result is <strong>up to 8 bits</strong>: <code>1111 × 1111 = 11100001</code> (240)</li>
+        <li>Uses the same idea as paper-and-pencil multiplication</li>
+    </ul>
+
+    <h2>2. Step-by-Step Method</h2>
+    <div class="step">
+        1. Write the two numbers one under the other<br>
+        2. Multiply the top number by each bit of the bottom number<br>
+        3. Shift left for each higher bit position<br>
+        4. Add all the rows together
+    </div>
+
+    <h2>3. Example 1: 1011 × 1101</h2>
+    <div class="example">
+        <p><strong>Numbers:</strong><br>
+           A = <span class="bit">1011</span> = 11<sub>10</sub><br>
+           B = <span class="bit">1101</span> = 13<sub>10</sub></p>
+
+        <pre>
+    1 0 1 1   ← Multiplicand (A)
+×   1 1 0 1   ← Multiplier (B)
+─────────────
+    1 0 1 1       ← A × B₀ (B₀ = 1) → shift 0
+  0 0 0 0         ← A × B₁ (B₁ = 0) → shift 1
+  1 0 1 1 0       ← A × B₂ (B₂ = 1) → shift 2
+1 0 1 1           ← A × B₃ (B₃ = 1) → shift 3
+─────────────
+1 0 0 0 1 1 1 1   ← Final Product = 143<sub>10</sub>
+        </pre>
+
+        <h3>Breakdown Table</h3>
+        <table>
+            <tr><th>Bit</th><th>Value</th><th>Operation</th><th>Partial Product</th><th>Shift</th></tr>
+            <tr><td>B₀</td><td>1</td><td>1011 × 1</td><td>1011</td><td>0</td></tr>
+            <tr><td>B₁</td><td>0</td><td>1011 × 0</td><td>0000</td><td>1 → 00000</td></tr>
+            <tr><td>B₂</td><td>1</td><td>1011 × 1</td><td>1011</td><td>2 → 101100</td></tr>
+            <tr><td>B₃</td><td>1</td><td>1011 × 1</td><td>1011</td><td>3 → 1011000</td></tr>
+        </table>
+
+        <div class="result">
+            11 × 13 = 143 → <span class="bit">10001111</span> (Correct!)
+        </div>
+    </div>
+
+    <h2>4. Example 2: 1111 × 0011</h2>
+    <div class="example">
+        <p><strong>Numbers:</strong><br>
+           A = <span class="bit">1111</span> = 15<br>
+           B = <span class="bit">0011</span> = 3</p>
+
+        <pre>
+    1 1 1 1
+×   0 0 1 1
+───────────
+    1 1 1 1     ← ×1 (shift 0)
+    1 1 1 1     ← ×1 (shift 1)
+    0 0 0 0     ← ×0 (shift 2)
+    0 0 0 0     ← ×0 (shift 3)
+───────────
+  1 0 1 1 0 1   ← Add: 15 + 30 = 45
+        </pre>
+
+        <div class="result">
+            15 × 3 = 45 → <span class="bit">00101101</span> (8-bit)
+        </div>
+    </div>
+
+    <h2>5. Quick Reference Table (Selected Values)</h2>
+    <table>
+        <tr><th>A</th><th>B</th><th>A×B (Decimal)</th><th>Product (Binary)</th></tr>
+        <tr><td>0011 (3)</td><td>0101 (5)</td><td>15</td><td><span class="bit">00001111</span></td></tr>
+        <tr><td>0110 (6)</td><td>0110 (6)</td><td>36</td><td><span class="bit">00100100</span></td></tr>
+        <tr><td>1010 (10)</td><td>1010 (10)</td><td>100</td><td><span class="bit">01100100</span></td></tr>
+        <tr><td>1111 (15)</td><td>1111 (15)</td><td>225</td><td><span class="bit">11100001</span></td></tr>
+    </table>
+
+    <h2>6. Key Points Summary</h2>
+    <ul>
+        <li>Always <strong>align bits by weight</strong> (shift left)</li>
+        <li>Only need to multiply by 0 or 1 → very simple!</li>
+        <li>Final answer is <strong>8 bits max</strong></li>
+        <li>Can be done by hand, calculator, or computer hardware</li>
+    </ul>
+
+    <div class="example">
+        <h3>Try It Yourself!</h3>
+        <p>Multiply: <span class="bit">1100</span> × <span class="bit">1010</span></p>
+        <p><em>Answer: 12 × 10 = 120 → <span class="bit">01111000</span></em></p>
+    </div>
+
+    <footer>
+        <p>4-Bit Binary Multiplication Guide | Generated on November 14, 2025</p>
+    </footer>
+
+</body>
+</html>

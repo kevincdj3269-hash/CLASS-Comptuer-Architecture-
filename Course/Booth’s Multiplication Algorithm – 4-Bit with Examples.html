@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booth’s Multiplication Algorithm – 4-Bit with Examples</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            margin: 25px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        h1 {
+            text-align: center;
+            color: #1a5276;
+            border-bottom: 4px solid #3498db;
+            padding-bottom: 15px;
+            font-size: 2.2em;
+        }
+        h2 {
+            color: #2980b9;
+            border-left: 5px solid #3498db;
+            padding-left: 12px;
+            margin-top: 35px;
+        }
+        h3 {
+            color: #16a085;
+            margin-top: 25px;
+        }
+        pre {
+            background: #2c3e3e;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1em;
+            line-height: 1.5;
+            border: 1px solid #444;
+        }
+        code {
+            background: #e8f4fc;
+            color: #2980b9;
+            padding: 3px 7px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+            font-family: monospace;
+        }
+        th {
+            background: #2980b9;
+            color: white;
+            padding: 14px;
+            text-align: center;
+            font-weight: bold;
+        }
+        td {
+            border: 1px solid #bdc3c7;
+            padding: 12px;
+            text-align: center;
+            background: #f9f9f9;
+        }
+        .bit {
+            font-weight: bold;
+            color: #e74c3c;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+        }
+        .highlight {
+            background: #fffacd !important;
+            font-weight: bold;
+        }
+        .example {
+            background: linear-gradient(120deg, #d5f4e6, #a8e6cf);
+            padding: 22px;
+            border-radius: 12px;
+            border-left: 6px solid #16a085;
+            margin: 25px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .step {
+            background: #f0f8ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 4px solid #3498db;
+            font-family: monospace;
+        }
+        .result {
+            background: #e8f8f5;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #27ae60;
+            border: 2px dashed #27ae60;
+            margin: 20px 0;
+        }
+        .booth-table {
+            font-size: 1.1em;
+        }
+        .booth-table th {
+            background: #8e44ad;
+        }
+        .note {
+            background: #fdf2e9;
+            border-left: 5px solid #e67e22;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-style: italic;
+        }
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Booth’s Multiplication Algorithm<br><small>4-Bit Signed & Unsigned with Step-by-Step Examples</small></h1>
+
+    <p><strong>Booth’s Algorithm</strong> is a powerful method to multiply <em>signed binary numbers</em> in <strong>2’s complement</strong> form. It reduces the number of partial products by encoding the multiplier.</p>
+
+    <h2>1. Key Features of Booth’s Algorithm</h2>
+    <ul>
+        <li>Works with <strong>signed numbers</strong> (2’s complement)</li>
+        <li>Reduces partial products using <strong>radix-4 encoding</strong></li>
+        <li>Eliminates strings of 1s in multiplier → faster addition</li>
+        <li>Used in CPUs, DSPs, and hardware multipliers</li>
+    </ul>
+
+    <h2>2. Booth’s Recoding Table (Radix-2)</h2>
+    <table class="booth-table">
+        <tr>
+            <th>Current Bit<br>(B<sub>i</sub>)</th>
+            <th>Previous Bit<br>(B<sub>i-1</sub>)</th>
+            <th>Action</th>
+            <th>Operation on Accumulator</th>
+        </tr>
+        <tr>
+            <td class="bit">0</td>
+            <td class="bit">0</td>
+            <td><strong>No operation</strong></td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td class="bit">0</td>
+            <td class="bit">1</td>
+            <td><strong>Add M</strong></td>
+            <td>A ← A + M</td>
+        </tr>
+        <tr>
+            <td class="bit">1</td>
+            <td class="bit">0</td>
+            <td><strong>Subtract M</strong></td>
+            <td>A ← A − M</td>
+        </tr>
+        <tr>
+            <td class="bit">1</td>
+            <td class="bit">1</td>
+            <td><strong>No operation</strong></td>
+            <td>—</td>
+        </tr>
+    </table>
+
+    <div class="note">
+        <strong>Note:</strong> B<sub>i-1</sub> is an implied <code>0</code> before the LSB of the multiplier.
+    </div>
+
+    <h2>3. Registers Used</h2>
+    <ul>
+        <li><strong>A</strong>: Accumulator (holds partial result, 8 bits for 4×4)</li>
+        <li><strong>Q</strong>: Multiplier (4 bits)</li>
+        <li><strong>M</strong>: Multiplicand (4 bits)</li>
+        <li><strong>Q<sub>-1</sub></strong>: Extra bit to hold previous LSB</li>
+        <li><strong>Count</strong>: Loop counter (4 for 4-bit)</li>
+    </ul>
+
+    <h2>4. Example 1: 3 × (−2) = −6</h2>
+    <div class="example">
+        <p><strong>Inputs:</strong><br>
+           Multiplicand (M) = <span class="bit">0011</span> (3)<br>
+           Multiplier (Q) = <span class="bit">1110</span> (−2 in 2’s complement)</p>
+
+        <h3>Step-by-Step Execution</h3>
+
+        <div class="step">
+            <strong>Initial State:</strong><br>
+            A = <code>0000 0000</code>, Q = <code>1110</code>, Q<sub>-1</sub> = <code>0</code>, M = <code>0011</code>
+        </div>
+
+        <table>
+            <tr><th>Step</th><th>Q<sub>0</sub>Q<sub>-1</sub></th><th>Action</th><th>A (after)</th><th>Q (after shift)</th><th>Q<sub>-1</sub></th></tr>
+            <tr>
+                <td>1</td>
+                <td class="bit">0 0</td>
+                <td>No op</td>
+                <td>0000 0000</td>
+                <td>0111</td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td class="bit">1 0</td>
+                <td><strong>A ← A − M</strong></td>
+                <td><span class="highlight">1111 1101</span></td>
+                <td>1011</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td class="bit">1 1</td>
+                <td>No op</td>
+                <td>1111 1101</td>
+                <td>1101</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td class="bit">1 1</td>
+                <td>No op</td>
+                <td>1111 1101</td>
+                <td>1110</td>
+                <td>1</td>
+            </tr>
+        </table>
+
+        <div class="result">
+            Final A|Q = <span class="bit">11111101 1110</span> → <span class="bit">11111010</span> = −6 ✓
+        </div>
+
+        <p><strong>Arithmetic Shift Right (ASR)</strong> preserves sign bit.</p>
+    </div>
+
+    <h2>5. Example 2: 5 × 3 = 15 (Unsigned)</h2>
+    <div class="example">
+        <p><strong>M = <span class="bit">0101</span> (5), Q = <span class="bit">0011</span> (3)</strong></p>
+
+        <table>
+            <tr><th>Step</th><th>Q<sub>0</sub>Q<sub>-1</sub></th><th>Action</th><th>A</th><th>Q</th><th>Q<sub>-1</sub></th></tr>
+            <tr>
+                <td>Init</td>
+                <td>—</td>
+                <td>—</td>
+                <td>00000000</td>
+                <td>0011</td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td class="bit">1 0</td>
+                <td>A ← A − M = −5</td>
+                <td><span class="highlight">1011</span></td>
+                <td>0001</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td class="bit">1 1</td>
+                <td>No op</td>
+                <td>1101</td>
+                <td>1000</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td class="bit">0 1</td>
+                <td>A ← A + M = −5 + 5 = 0</td>
+                <td><span class="highlight">0000</span></td>
+                <td>0100</td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td class="bit">0 0</td>
+                <td>No op</td>
+                <td>0000</td>
+                <td>0010</td>
+                <td>0</td>
+            </tr>
+        </table>
+
+        <div class="result">
+            Product = A|Q = <span class="bit">00000000 0010</span> → <span class="bit">00001111</span> = 15 ✓
+        </div>
+    </div>
+
+    <h2>6. Radix-4 Booth (Advanced)</h2>
+    <p>Examines <strong>3 bits at a time</strong> → only <strong>2 partial products</strong> for 4-bit!</p>
+
+    <table class="booth-table">
+        <tr><th>B<sub>i+1</sub> B<sub>i</sub> B<sub>i-1</sub></th><th>Operation</th></tr>
+        <tr><td>000</td><td>0</td></tr>
+        <tr><td>001, 010</td><td>+1×M</td></tr>
+        <tr><td>011</td><td>+2×M</td></tr>
+        <tr><td>100</td><td>−2×M</td></tr>
+        <tr><td>101, 110</td><td>−1×M</td></tr>
+        <tr><td>111</td><td>0</td></tr>
+    </table>
+
+    <h2>7. Advantages & Disadvantages</h2>
+    <table>
+        <tr><th>Pros</th><th>Cons</th></tr>
+        <tr>
+            <td>Fewer additions (especially for 1s strings)</td>
+            <td>Needs subtraction logic</td>
+        </tr>
+        <tr>
+            <td>Handles signed numbers naturally</td>
+            <td>Variable number of operations</td>
+        </tr>
+        <tr>
+            <td>Used in real CPUs (e.g., ARM, x86)</td>
+            <td>Complex control logic</td>
+        </tr>
+    </table>
+
+    <h2>8. Verilog Snippet (Booth Step)</h2>
+    <pre>
+// One step of Booth multiplier
+case ({Q[0], Q_m1})
+    2'b01: A <= A + M;
+    2'b10: A <= A - M;
+    default: ; // do nothing
+endcase
+{A, Q, Q_m1} <= {A[7], A, Q}; // Arithmetic shift
+    </pre>
+
+    <div class="example">
+        <h3>Try It!</h3>
+        <p>Multiply: <span class="bit">1101</span> (−3) × <span class="bit">1010</span> (−6)</p>
+        <p><em>Expected: +18 → <span class="bit">00010010</span></em></p>
+    </div>
+
+    <footer>
+        <p>Booth’s Multiplication Algorithm – 4-Bit Guide | Generated on November 14, 2025</p>
+    </footer>
+</div>
+
+</body>
+</html>

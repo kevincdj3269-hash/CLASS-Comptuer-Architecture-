@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-Bit Array Multiplier Design with Examples</title>
+    <style>
+        :root {
+            --primary: #1a5276;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #e67e22;
+            --danger: #c0392b;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --code-bg: #2d2d2d;
+            --bit-color: #e74c3c;
+            --gate-and: #9b59b6;
+            --gate-fa: #e67e22;
+            --gate-ha: #f1c40f;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        }
+        header {
+            background: linear-gradient(135deg, var(--accent), #2980b9);
+            color: white;
+            text-align: center;
+            padding: 45px 25px;
+        }
+        header h1 {
+            font-size: 2.6em;
+            margin-bottom: 12px;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+        header p {
+            font-size: 1.25em;
+            opacity: 0.95;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .content {
+            padding: 45px;
+        }
+        h2 {
+            color: var(--primary);
+            border-bottom: 4px solid var(--accent);
+            padding-bottom: 12px;
+            margin: 40px 0 25px;
+            font-size: 1.9em;
+            position: relative;
+        }
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 80px;
+            height: 4px;
+            background: var(--success);
+        }
+        h3 {
+            color: #16a085;
+            margin: 30px 0 18px;
+            font-size: 1.5em;
+            border-left: 5px solid #16a085;
+            padding-left: 15px;
+        }
+        .card {
+            background: var(--light);
+            border-radius: 15px;
+            padding: 28px;
+            margin: 28px 0;
+            border-left: 6px solid var(--accent);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+        }
+        pre {
+            background: var(--code-bg);
+            color: #f8f8f2;
+            padding: 22px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1.02em;
+            line-height: 1.7;
+            margin: 18px 0;
+            border: 1px solid #444;
+            position: relative;
+        }
+        pre::before {
+            content: 'CODE';
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 0.7em;
+            color: #666;
+            font-weight: bold;
+        }
+        code {
+            background: #e8f4fc;
+            color: #2980b9;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 22px 0;
+            font-family: monospace;
+            font-size: 1.05em;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th {
+            background: var(--accent);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            border: 1px solid #ddd;
+            padding: 14px;
+            text-align: center;
+            background: #fdfdfd;
+            transition: background 0.3s ease;
+        }
+        td:hover {
+            background: #f0f8ff;
+        }
+        .bit {
+            font-weight: bold;
+            color: var(--bit-color);
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            letter-spacing: 1.5px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            background: #fdf2f2;
+        }
+        .highlight {
+            background: #fffacd !important;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { background-color: #fffacd; }
+            50% { background-color: #ffeb3b; }
+        }
+        .gate {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin: 3px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .gate-and { background: var(--gate-and); }
+        .gate-fa { background: var(--gate-fa); }
+        .gate-ha { background: var(--gate-ha); color: #2c3e50; }
+        .diagram {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px dashed var(--accent);
+            text-align: center;
+            font-family: monospace;
+            margin: 25px 0;
+            font-size: 1.1em;
+            line-height: 2;
+            position: relative;
+        }
+        .diagram::before {
+            content: 'ARRAY MULTIPLIER STRUCTURE';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .pp-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        .pp-cell {
+            background: #e8f5e9;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            border: 1px solid #a5d6a7;
+            font-size: 1.1em;
+        }
+        .pp-cell.header {
+            background: #27ae60;
+            color: white;
+        }
+        .result {
+            background: linear-gradient(120deg, #d5f4e6, #a8e6cf);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--success);
+            border: 3px dashed var(--success);
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.25);
+        }
+        .resource-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        }
+        .resource-table th {
+            background: var(--danger);
+        }
+        .note {
+            background: #fff8e1;
+            border-left: 6px solid var(--warning);
+            padding: 18px;
+            border-radius: 0 12px 12px 0;
+            margin: 25px 0;
+            font-style: italic;
+            color: #8d6e63;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .verilog {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #f8f8f2;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .verilog h3 {
+            color: #1abc9c;
+            margin-bottom: 15px;
+        }
+        footer {
+            text-align: center;
+            padding: 35px;
+            background: var(--dark);
+            color: white;
+            font-size: 0.95em;
+        }
+        @media (max-width: 768px) {
+            .content { padding: 25px; }
+            header h1 { font-size: 2em; }
+            .pp-matrix { grid-template-columns: 1fr; }
+            table { font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>4-Bit Array Multiplier Design</h1>
+        <p>Complete Hardware Implementation Using AND Gates & Full Adders – Step-by-Step with Examples</p>
+    </header>
+
+    <div class="content">
+
+        <div class="card">
+            <h2>Overview</h2>
+            <p>The <strong>Array Multiplier</strong> (also called <em>Braun Multiplier</em>) is a <strong>combinational logic circuit</strong> that multiplies two binary numbers using a grid of <strong>AND gates</strong> for partial products and <strong>full adders</strong> for summation.</p>
+            
+            <div class="note">
+                <strong>Key Features:</strong><br>
+                • Regular, repeatable structure → Easy to layout in VLSI<br>
+                • Uses only AND gates and full/half adders<br>
+                • Critical path: ~6 × T_FA (Full Adder delay)<br>
+                • Ideal for teaching and ASIC implementation
+            </div>
+        </div>
+
+        <h2>Architecture: 4×4 Array Multiplier</h2>
+        <div class="card">
+            <h3>Inputs & Outputs</h3>
+            <ul>
+                <li><strong>A[3:0]</strong>: Multiplicand (4 bits)</li>
+                <li><strong>B[3:0]</strong>: Multiplier (4 bits)</li>
+                <li><strong>P[7:0]</strong>: Product (8 bits)</li>
+            </ul>
+
+            <h3>Components Used</h3>
+            <div class="resource-table">
+                <table>
+                    <tr><th>Component</th><th>Count</th><th>Purpose</th></tr>
+                    <tr><td><span class="gate gate-and">AND Gate</span></td><td><strong>16</strong></td><td>Generate partial products: Aᵢ × Bⱼ</td></tr>
+                    <tr><td><span class="gate gate-fa">Full Adder</span></td><td><strong>9</strong></td><td>Sum 3 bits in middle columns</td></tr>
+                    <tr><td><span class="gate gate-ha">Half Adder</span></td><td><strong>3</strong></td><td>Sum 2 bits in edge columns</td></tr>
+                    <tr><td colspan="2"><strong>Total Delay</strong></td><td><strong>~6 × T_FA</strong></td></tr>
+                </table>
+            </div>
+
+            <h3>Structure Diagram</h3>
+            <div class="diagram">
+                A3 A2 A1 A0<br>
+              × B3 B2 B1 B0<br>
+              ─────────────<br>
+              <strong>PP Matrix (4×4):</strong><br>
+              a0b0 . . .<br>
+              a1b0 a0b1 . .<br>
+              a2b0 a1b1 a0b2 .<br>
+              a3b0 a2b1 a1b2 a0b3<br>
+              ↓<br>
+              <strong>Adder Array (3 rows × 4 columns)</strong><br>
+              → P7 P6 P5 P4 P3 P2 P1 P0
+            </div>
+        </div>
+
+        <h2>Partial Product Generation</h2>
+        <div class="card">
+            <p>Each bit of the multiplier is ANDed with the entire multiplicand:</p>
+            <div class="pp-matrix">
+                <div class="pp-cell header"></div>
+                <div class="pp-cell header">B₀</div>
+                <div class="pp-cell header">B₁</div>
+                <div class="pp-cell header">B₂</div>
+                <div class="pp-cell header">B₃</div>
+                <div class="pp-cell header">A₀</div>
+                <div class="pp-cell">a0b0</div>
+                <div class="pp-cell">a0b1</div>
+                <div class="pp-cell">a0b2</div>
+                <div class="pp-cell">a0b3</div>
+                <div class="pp-cell header">A₁</div>
+                <div class="pp-cell">a1b0</div>
+                <div class="pp-cell">a1b1</div>
+                <div class="pp-cell">a1b2</div>
+                <div class="pp-cell">a1b3</div>
+                <div class="pp-cell header">A₂</div>
+                <div class="pp-cell">a2b0</div>
+                <div class="pp-cell">a2b1</div>
+                <div class="pp-cell">a2b2</div>
+                <div class="pp-cell">a2b3</div>
+                <div class="pp-cell header">A₃</div>
+                <div class="pp-cell">a3b0</div>
+                <div class="pp-cell">a3b1</div>
+                <div class="pp-cell">a3b2</div>
+                <div class="pp-cell">a3b3</div>
+            </div>
+        </div>
+
+        <h2>Example: 11 × 13 = 143</h2>
+        <div class="card">
+            <p><strong>Inputs:</strong><br>
+               A = <span class="bit">1011</span> (11)<br>
+               B = <span class="bit">1101</span> (13)</p>
+
+            <h3>Step 1: Generate Partial Products</h3>
+            <pre>
+    1 0 1 1   (A)
+×   1 1 0 1   (B)
+─────────────
+    1 0 1 1       ← PP0: A × B₀=1
+  0 0 0 0         ← PP1: A × B₁=0 (shift 1)
+  1 0 1 1 0       ← PP2: A × B₂=1 (shift 2)
+1 0 1 1           ← PP3: A × B₃=1 (shift 3)
+─────────────
+1 0 0 0 1 1 1 1   ← Final Sum = 143
+            </pre>
+
+            <h3>Step 2: Adder Array Execution</h3>
+            <table>
+                <tr><th>Column</th><th>Inputs</th><th>Sum</th><th>Carry Out</th></tr>
+                <tr><td>0</td><td>a0b0</td><td>P0=1</td><td>C=0</td></tr>
+                <tr><td>1</td><td>a1b0, a0b1</td><td>P1=0</td><td>C=1</td></tr>
+                <tr><td>2</td><td>a2b0, a1b1, a0b2, C_in</td><td>P2=0</td><td>C=1</td></tr>
+                <tr><td>3</td><td>a3b0, a2b1, a1b2, a0b3, C_in</td><td>P3=1</td><td>C=1</td></tr>
+                <tr><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+                <tr><td>7</td><td>Final carry</td><td><span class="highlight">P7=1</span></td><td>—</td></tr>
+            </table>
+
+            <div class="result">
+                Product = <span class="bit">10001111</span> = 143<sub>10</sub> Correct!
+            </div>
+        </div>
+
+        <h2>Gate-Level Implementation</h2>
+        <div class="card">
+            <h3>Full Adder (FA) Logic</h3>
+            <pre>
+// Full Adder
+Sum = A ⊕ B ⊕ C_in
+Carry = (A&B) | (B&C_in) | (A&C_in)
+            </pre>
+
+            <h3>Half Adder (HA) Logic</h3>
+            <pre>
+// Half Adder
+Sum = A ⊕ B
+Carry = A & B
+            </pre>
+
+            <h3>Critical Path</h3>
+            <p>Longest path: <code>P0 → FA → FA → FA → FA → FA → P7</code> → <strong>6 Full Adders</strong></p>
+        </div>
+
+        <h2>Verilog HDL Code</h2>
+        <div class="verilog">
+            <h3>Structural 4-Bit Array Multiplier</h3>
+            <pre>
+// 4-bit Array Multiplier
+module array_multiplier_4bit (
+    input  [3:0] A, B,
+    output [7:0] P
+);
+
+    // Partial products
+    wire [3:0] pp[3:0];
+    genvar i, j;
+    generate
+        for (i = 0; i < 4; i = i + 1) begin : pp_gen
+            for (j = 0; j < 4; j = j + 1) begin
+                assign pp[i][j] = A[i] & B[j];
+            end
+        end
+    endgenerate
+
+    // Intermediate sums and carries
+    wire [7:0] sum0, sum1, sum2;
+    wire [7:0] carry0, carry1, carry2;
+
+    // Row 0: PP0 + PP1<<1
+    assign sum0 = {4'b0, pp[0]} + {3'b0, pp[1], 1'b0};
+
+    // Row 1: sum0 + PP2<<2
+    assign {carry1, sum1} = sum0 + {2'b0, pp[2], 2'b0};
+
+    // Row 2: sum1 + PP3<<3
+    assign {carry2, sum2} = sum1 + {1'b0, pp[3], 3'b0};
+
+    // Final product
+    assign P = sum2 + {carry2, 8'b0};
+
+endmodule
+            </pre>
+        </div>
+
+        <h2>Performance Comparison</h2>
+        <div class="card">
+            <table>
+                <tr><th>Parameter</th><th>Array Multiplier</th><th>Booth</th><th>Wallace Tree</th></tr>
+                <tr><td>Gate Count</td><td>High (~100)</td><td>Medium</td><td>Medium</td></tr>
+                <tr><td>Delay</td><td>High (6 T_FA)</td><td>Medium</td><td><strong>Low (4 T_CSA)</strong></td></tr>
+                <tr><td>Area</td><td>Medium</td><td>Low</td><td>High</td></tr>
+                <tr><td>Regularity</td><td><strong>Excellent</strong></td><td>Good</td><td>Poor</td></tr>
+                <tr><td>Use Case</td><td>ASIC, FPGA, Teaching</td><td>DSP</td><td>High-Speed CPU</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Try It Yourself!</h3>
+            <p>Multiply: <span class="bit">1110</span> × <span class="bit">1011</span></p>
+            <p><em>Answer: 14 × 11 = 154 → <span class="bit">10011010</span></em></p>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>4-Bit Array Multiplier Design – Complete Educational Resource</p>
+        <p>Generated on November 14, 2025 | Ideal for VLSI, Digital Logic, and Computer Architecture Courses</p>
+    </footer>
+</div>
+
+</body>
+</html>

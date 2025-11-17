@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-Bit Binary Addition Design with Examples</title>
+    <style>
+        :root {
+            --primary: #1a5276;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #e67e22;
+            --danger: #c0392b;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --code-bg: #2d2d2d;
+            --bit-color: #e74c3c;
+            --gate-fa: #e67e22;
+            --gate-ha: #f1c40f;
+            --gate-xor: #9b59b6;
+            --gate-and: #8e44ad;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        }
+        header {
+            background: linear-gradient(135deg, var(--accent), #2980b9);
+            color: white;
+            text-align: center;
+            padding: 45px 25px;
+        }
+        header h1 {
+            font-size: 2.6em;
+            margin-bottom: 12px;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+        header p {
+            font-size: 1.25em;
+            opacity: 0.95;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .content {
+            padding: 45px;
+        }
+        h2 {
+            color: var(--primary);
+            border-bottom: 4px solid var(--accent);
+            padding-bottom: 12px;
+            margin: 40px 0 25px;
+            font-size: 1.9em;
+            position: relative;
+        }
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 80px;
+            height: 4px;
+            background: var(--success);
+        }
+        h3 {
+            color: #16a085;
+            margin: 30px 0 18px;
+            font-size: 1.5em;
+            border-left: 5px solid #16a085;
+            padding-left: 15px;
+        }
+        .card {
+            background: var(--light);
+            border-radius: 15px;
+            padding: 28px;
+            margin: 28px 0;
+            border-left: 6px solid var(--accent);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+        }
+        pre {
+            background: var(--code-bg);
+            color: #f8f8f2;
+            padding: 22px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1.02em;
+            line-height: 1.7;
+            margin: 18px 0;
+            border: 1px solid #444;
+            position: relative;
+        }
+        pre::before {
+            content: 'BINARY ADDITION';
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 0.7em;
+            color: #666;
+            font-weight: bold;
+        }
+        code {
+            background: #e8f4fc;
+            color: #2980b9;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 22px 0;
+            font-family: monospace;
+            font-size: 1.05em;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th {
+            background: var(--accent);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            border: 1px solid #ddd;
+            padding: 14px;
+            text-align: center;
+            background: #fdfdfd;
+            transition: background 0.3s ease;
+        }
+        td:hover {
+            background: #f0f8ff;
+        }
+        .bit {
+            font-weight: bold;
+            color: var(--bit-color);
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            letter-spacing: 1.5px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            background: #fdf2f2;
+        }
+        .carry {
+            color: var(--danger);
+            font-weight: bold;
+            background: #ffebee;
+        }
+        .highlight {
+            background: #fffacd !important;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { background-color: #fffacd; }
+            50% { background-color: #ffeb3b; }
+        }
+        .gate {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin: 3px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .gate-fa { background: var(--gate-fa); }
+        .gate-ha { background: var(--gate-ha); color: #2c3e50; }
+        .gate-xor { background: var(--gate-xor); }
+        .gate-and { background: var(--gate-and); }
+        .diagram {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px dashed var(--accent);
+            text-align: center;
+            font-family: monospace;
+            margin: 25px 0;
+            font-size: 1.1em;
+            line-height: 2;
+            position: relative;
+        }
+        .diagram::before {
+            content: '4-BIT RIPPLE CARRY ADDER';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .add-matrix {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .add-cell {
+            background: #e8f5e9;
+            padding: 14px;
+            text-align: center;
+            border-radius: 8px;
+            border: 1px solid #a5d6a7;
+        }
+        .add-cell.header {
+            background: #27ae60;
+            color: white;
+        }
+        .result {
+            background: linear-gradient(120deg, #d5f4e6, #a8e6cf);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--success);
+            border: 3px dashed var(--success);
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.25);
+        }
+        .resource-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        }
+        .resource-table th {
+            background: var(--success);
+        }
+        .note {
+            background: #fff8e1;
+            border-left: 6px solid var(--warning);
+            padding: 18px;
+            border-radius: 0 12px 12px 0;
+            margin: 25px 0;
+            font-style: italic;
+            color: #8d6e63;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .verilog {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #f8f8f2;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .verilog h3 {
+            color: #1abc9c;
+            margin-bottom: 15px;
+        }
+        footer {
+            text-align: center;
+            padding: 35px;
+            background: var(--dark);
+            color: white;
+            font-size: 0.95em;
+        }
+        @media (max-width: 768px) {
+            .content { padding: 25px; }
+            header h1 { font-size: 2em; }
+            .add-matrix { grid-template-columns: 1fr; }
+            table { font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>4-Bit Binary Addition Design</h1>
+        <p>Complete Hardware Implementation Using Ripple Carry Adder – Step-by-Step Examples</p>
+    </header>
+
+    <div class="content">
+
+        <div class="card">
+            <h2>Overview</h2>
+            <p><strong>Binary addition</strong> is the foundation of digital arithmetic. A <strong>4-bit adder</strong> adds two 4-bit numbers and produces a 4-bit sum with a <strong>carry-out</strong> (overflow flag).</p>
+            
+            <div class="note">
+                <strong>Key Features:</strong><br>
+                • Uses <strong>Full Adders (FA)</strong> and <strong>Half Adders (HA)</strong><br>
+                • <strong>Ripple Carry</strong>: Carry propagates from LSB to MSB<br>
+                • Critical path: 4 × T_FA (Full Adder delay)<br>
+                • Simple, regular, easy to implement in hardware
+            </div>
+        </div>
+
+        <h2>4-Bit Ripple Carry Adder Architecture</h2>
+        <div class="card">
+            <h3>Inputs & Outputs</h3>
+            <ul>
+                <li><strong>A[3:0], B[3:0]</strong>: Two 4-bit inputs</li>
+                <li><strong>Sum[3:0]</strong>: 4-bit result</li>
+                <li><strong>Cout</strong>: Carry-out (5th bit)</li>
+                <li><strong>Cin</strong>: Carry-in (usually 0)</li>
+            </ul>
+
+            <h3>Components Used</h3>
+            <div class="resource-table">
+                <table>
+                    <tr><th>Component</th><th>Count</th><th>Purpose</th></tr>
+                    <tr><td><span class="gate gate-fa">Full Adder</span></td><td><strong>4</strong></td><td>Add 3 bits (Aᵢ, Bᵢ, Cᵢₙ)</td></tr>
+                    <tr><td><span class="gate gate-xor">XOR Gate</span></td><td><strong>8</strong></td><td>Sum = A ⊕ B ⊕ C</td></tr>
+                    <tr><td><span class="gate gate-and">AND Gate</span></td><td><strong>8</strong></td><td>Carry generation</td></tr>
+                    <tr><td colspan="2"><strong>Total Delay</strong></td><td><strong>~8 gate delays</strong></td></tr>
+                </table>
+            </div>
+
+            <h3>Block Diagram</h3>
+            <div class="diagram">
+                A3 A2 A1 A0<br>
+              + B3 B2 B1 B0<br>
+              ─────────────<br>
+              C4 S3 S2 S1 S0<br>
+              ↑  FA  FA  FA  FA<br>
+              │←C3←C2←C1←C0=0<br>
+              <strong>Ripple Carry Chain</strong>
+            </div>
+        </div>
+
+        <h2>Manual Addition (Paper Method)</h2>
+        <div class="card">
+            <h3>Rules</h3>
+            <ul>
+                <li><code>0 + 0 = 0</code>, Carry = 0</li>
+                <li><code>0 + 1 = 1</code>, Carry = 0</li>
+                <li><code>1 + 1 = 0</code>, Carry = 1</li>
+                <li><code>1 + 1 + 1 = 1</code>, Carry = 1</li>
+            </ul>
+
+            <div class="add-matrix">
+                <div class="add-cell header">Bit</div>
+                <div class="add-cell header">A</div>
+                <div class="add-cell header">B</div>
+                <div class="add-cell header">C_in</div>
+                <div class="add-cell header">Sum</div>
+                <div class="add-cell header">C_out</div>
+                <div class="add-cell header">3</div>
+                <div class="add-cell bit">1</div>
+                <div class="add-cell bit">0</div>
+                <div class="add-cell carry">1</div>
+                <div class="add-cell bit">0</div>
+                <div class="add-cell carry">1</div>
+                <div class="add-cell header">2</div>
+                <div class="add-cell bit">1</div>
+                <div class="add-cell bit">1</div>
+                <div class="add-cell">0</div>
+                <div class="add-cell bit">0</div>
+                <div class="add-cell carry">1</div>
+                <div class="add-cell header">1</div>
+                <div class="add-cell bit">0</div>
+                <div class="add-cell bit">1</div>
+                <div class="add-cell">0</div>
+                <div class="add-cell bit">1</div>
+                <div class="add-cell">0</div>
+                <div class="add-cell header">0</div>
+                <div class="add-cell bit">1</div>
+                <div class="add-cell bit">0</div>
+                <div class="add-cell">0</div>
+                <div class="add-cell bit">1</div>
+                <div class="add-cell">0</div>
+            </div>
+            <p><strong>Result:</strong> <span class="bit">1011</span> + <span class="bit">0110</span> = <span class="bit">10001</span> (17)</p>
+        </div>
+
+        <h2>Example 1: 11 + 6 = 17</h2>
+        <div class="card">
+            <p><strong>Inputs:</strong><br>
+               A = <span class="bit">1011</span> (11)<br>
+               B = <span class="bit">0110</span> (6)</p>
+
+            <h3>Step-by-Step Addition</h3>
+            <pre>
+    1 0 1 1   (11)
+  + 0 1 1 0   (6)
+  ─────────
+  1 0 0 0 1   (17)  Cout=1
+            </pre>
+
+            <h3>Bit-by-Bit Breakdown</h3>
+            <table>
+                <tr><th>Bit</th><th>A</th><th>B</th><th>C_in</th><th>Sum</th><th>C_out</th></tr>
+                <tr><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td></tr>
+                <tr><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+                <tr><td>2</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+                <tr><td>3</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td></tr>
+                <tr><td>Cout</td><td colspan="4"></td><td><span class="highlight">1</span></td></tr>
+            </table>
+
+            <div class="result">
+                Sum = <span class="bit">0001</span>, Carry = <span class="bit">1</span> → <span class="bit">10001</span> = 17 Correct!
+            </div>
+        </div>
+
+        <h2>Example 2: 15 + 1 = 16 (Overflow)</h2>
+        <div class="card">
+            <p><strong>A = <span class="bit">1111</span> (15), B = <span class="bit">0001</span> (1)</strong></p>
+
+            <pre>
+    1 1 1 1
+  + 0 0 0 1
+  ────────
+  1 0 0 0 0   Cout=1 → Overflow!
+            </pre>
+
+            <div class="result">
+                Sum = <span class="bit">0000</span>, Carry = <span class="bit">1</span> → Result = 16 (but 4-bit sum shows 0!)
+            </div>
+        </div>
+
+        <h2>Full Adder Logic</h2>
+        <div class="card">
+            <h3>Equations</h3>
+            <pre>
+Sum  = A ⊕ B ⊕ C_in
+C_out = (A & B) | (B & C_in) | (A & C_in)
+            </pre>
+
+            <h3>Gate-Level Diagram</h3>
+            <pre>
+    A ──⊕──⊕── Sum
+        │   │
+    B ──⊕──┘
+            │
+        C_in
+            │
+    Carry = Majority(A,B,C_in)
+            </pre>
+        </div>
+
+        <h2>Verilog HDL Code</h2>
+        <div class="verilog">
+            <h3>4-Bit Ripple Carry Adder</h3>
+            <pre>
+// 4-bit Ripple Carry Adder
+module adder_4bit (
+    input  [3:0] A, B,
+    input  Cin,
+    output [3:0] Sum,
+    output Cout
+);
+
+    wire c1, c2, c3;
+
+    full_adder fa0 (.a(A[0]), .b(B[0]), .cin(Cin),  .sum(Sum[0]), .cout(c1));
+    full_adder fa1 (.a(A[1]), .b(B[1]), .cin(c1),   .sum(Sum[1]), .cout(c2));
+    full_adder fa2 (.a(A[2]), .b(B[2]), .cin(c2),   .sum(Sum[2]), .cout(c3));
+    full_adder fa3 (.a(A[3]), .b(B[3]), .cin(c3),   .sum(Sum[3]), .cout(Cout));
+
+endmodule
+
+// Full Adder Module
+module full_adder (
+    input a, b, cin,
+    output sum, cout
+);
+    assign sum  = a ^ b ^ cin;
+    assign cout = (a & b) | (b & cin) | (a & cin);
+endmodule
+            </pre>
+        </div>
+
+        <h2>Overflow Detection</h2>
+        <div class="card">
+            <table>
+                <tr><th>Condition</th><th>Meaning</th></tr>
+                <tr><td>Cout = 1</td><td>Unsigned overflow</td></tr>
+                <tr><td>A[3] == B[3] && Sum[3] != A[3]</td><td>Signed overflow</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Try It Yourself!</h3>
+            <p>Add: <span class="bit">1100</span> + <span class="bit">1011</span></p>
+            <p><em>Answer: 12 + 11 = 23 → <span class="bit">10111</span></em></p>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>4-Bit Binary Addition Design – Complete Educational Resource</p>
+        <p>Generated on November 14, 2025 | Ideal for Digital Logic, Computer Architecture, and VLSI Courses</p>
+    </footer>
+</div>
+
+</body>
+</html>
