@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Branch and Jump Instructions with Examples</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; background: #f9f9f9; color: #333; }
+        h1, h2 { color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #e74c3c; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        code { background: #eee; padding: 2px 6px; border-radius: 4px; font-family: Consolas, monospace; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        .container { max-width: 960px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        .note { background: #fffacd; padding: 12px; border-left: 5px solid #ffeb3b; margin: 20px 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>Branch and Jump Instructions</h1>
+    <p>In assembly language, <strong>Branch</strong> and <strong>Jump</strong> instructions are used to change the flow of program execution (control flow). They can be conditional or unconditional.</p>
+
+    <h2>1. Unconditional Jump / Branch</h2>
+    <p>Always changes the program counter (PC) to the target address.</p>
+    <table>
+        <tr><th>Architecture</th><th>Instruction</th><th>Example</th><th>Description</th></tr>
+        <tr><td>x86</td><td><code>JMP</code></td><td><code>JMP label</code><br><code>JMP 0x401000</code></td><td>Jump unconditionally</td></tr>
+        <tr><td>ARM</td><td><code>B</code> / <code>BL</code></td><td><code>B loop</code><br><code>BL subroutine</code></td><td>B = branch, BL = branch with link (for function call)</td></tr>
+        <tr><td>MIPS</td><td><code>J</code> / <code>JAL</code></td><td><code>J target</code><br><code>JAL subroutine</code></td><td>JAL saves return address in $ra</td></tr>
+        <tr><td>RISC-V</td><td><code>JAL</code> (with rd=x0 → J)</td><td><code>JAL x0, label</code> or <code>J label</code></td><td>Pseudo instruction <code>J</code> is common</td></tr>
+    </table>
+
+    <h2>2. Conditional Branch</h2>
+    <p>Jumps only if a certain condition (usually flags) is met.</p>
+    <table>
+        <tr><th>Architecture</th><th>Common Conditional Branches</th><th>Examples</th></tr>
+        <tr><td rowspan="5">x86</td>
+            <td><code>JE</code> / <code>JZ</code>   → Jump if Equal / Zero</td><td rowspan="5">
+                <pre>
+CMP EAX, EBX
+JE  equal_label     ; if EAX == EBX
+JNE not_equal       ; if EAX != EBX
+JG  greater         ; signed >
+JGE greater_or_eq
+JL  less            ; signed <
+JMP always_jump
+                </pre>
+            </td></tr>
+        <tr><td><code>JNE</code> / <code>JNZ</code> → Jump if Not Equal</td></tr>
+        <tr><td><code>JG</code> / <code>JGE</code>   → Greater / Greater or Equal (signed)</td></tr>
+        <tr><td><code>JA</code> / <code>JAE</code>   → Above / Above or Equal (unsigned)</td></tr>
+        <tr><td><code>JB</code> / <code>JC</code>     → Below / Carry</td></tr>
+
+        <tr><td>ARM</td><td>Add suffix to <code>B</code>: EQ, NE, GT, GE, LT, etc.</td>
+            <pre>
+CMP  r0, r1
+BEQ  equal_label
+BNE  not_equal
+BGT  greater_than
+BLT  less_than
+B    always          ; unconditional
+            </pre>
+        </td></tr>
+
+        <tr><td>MIPS</td><td><code>BEQ</code>, <code>BNE</code>, <code>BGTZ</code>, <code>BLEZ</code>, etc.</td>
+            <pre>
+BEQ  $t0, $t1, match
+BNE  $t0, $zero, not_zero
+SLTI $t2, $t0, 100    ; set $t2=1 if $t0 < 100
+BNE  $t2, $zero, less_than_100
+J    somewhere
+            </pre>
+        </td></tr>
+
+        <tr><td>RISC-V</td><td><code>BEQ</code>, <code>BNE</code>, <code>BLT</code>, <code>BGE</code>, <code>BLTU</code>, <code>BGEU</code></td>
+            <pre>
+BEQ  x10, x11, equal
+BNE  x10, x0, not_zero
+BLT  x10, x11, less_than      ; signed
+BGEU x10, x11, greater_equal_unsigned
+JAL  ra, function_call        ; call subroutine
+J    loop                     ; pseudo jump
+            </pre>
+        </td></tr>
+    </table>
+
+    <div class="note">
+        <strong>Key Difference:</strong><br>
+        • In many architectures (ARM, MIPS, RISC-V), "branch" and "jump" are technically the same concept.<br>
+        • In x86, <code>JMP</code> can jump very far (any address), while short conditional jumps (JE, JNE, etc.) have limited range (±128 bytes).
+    </div>
+
+    <h2>Classic Example: Infinite Loop + Conditional Exit</h2>
+    <pre>
+; x86 assembly
+loop_start:
+    INC  EAX
+    CMP  EAX, 100
+    JNE  loop_start     ; repeat until EAX == 100
+    ; exit loop when EAX reaches 100
+    </pre>
+
+    <p>This simple pattern is used in nearly every program for loops, if-statements, switch, function calls, etc.</p>
+
+</div>
+</body>
+</html>

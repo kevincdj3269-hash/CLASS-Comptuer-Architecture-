@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arithmetic Shift Explained with Examples</title>
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; line-height: 1.7; margin: 40px; background: #f8f9fc; color: #333; }
+        h1, h2 { color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 14px; text-align: center; }
+        th { background-color: #2980b9; color: white; }
+        .bit { font-family: Consolas, monospace; font-size: 1.4em; letter-spacing: 3px; }
+        .positive { color: #27ae60; }
+        .negative { color: #e74c3c; }
+        .note { background: #fffde7; padding: 15px; border-left: 5px solid #f1c40f; margin: 20px 0; border-radius: 5px; }
+        .summary { font-size: 1.2em; font-weight: bold; color: #2c3e50; margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<h1>Arithmetic Shift Explained with Examples</h1>
+
+<h2>What is Arithmetic Shift?</h2>
+<p>Arithmetic shift is a bit-shift operation designed for <strong>signed integers</strong> (two’s complement).<br>
+Its key feature: <strong>It preserves the sign bit</strong>.</p>
+
+<ul>
+    <li><strong>Arithmetic Left Shift (ASL / SAL / SHL)</strong>: Shift left, fill with 0 → equivalent to ×2</li>
+    <li><strong>Arithmetic Right Shift (ASR / SAR)</strong>: Shift right, fill with the original sign bit → equivalent to ÷2 (with floor rounding)</li>
+</ul>
+
+<h2>Arithmetic Shift vs Logical Shift</h2>
+<table>
+    <tr>
+        <th>Operation</th>
+        <th>Left Shift</th>
+        <th>Right Shift Fill</th>
+        <th>Preserves Sign?</th>
+    </tr>
+    <tr>
+        <td><strong>Arithmetic Shift</strong></td>
+        <td>Fill 0</td>
+        <td>Fill with sign bit</td>
+        <td>Yes</td>
+    </tr>
+    <tr>
+        <td><strong>Logical Shift</strong></td>
+        <td>Fill 0</td>
+        <td>Always fill 0</td>
+        <td>No (can change negative → positive)</td>
+    </tr>
+</table>
+
+<h2>8-bit Examples (Two’s Complement)</h2>
+
+<div class="note">
+    <strong>Positive number:</strong> +24 = <span class="bit positive">00011000</span><br>
+    <strong>Negative number:</strong> –24 = <span class="bit negative">11101000</span>
+</div>
+
+<table>
+    <tr>
+        <th>Operation</th>
+        <th>Original</th>
+        <th>After Shift</th>
+        <th>Decimal Result</th>
+    </tr>
+
+    <tr>
+        <td>Arithmetic Left Shift ×1 (×2)</td>
+        <td>+24 = <span class="bit positive">00011000</span></td>
+        <td>→ <span class="bit positive">00110000</span></td>
+        <td>+48</td>
+    </tr>
+    <tr>
+        <td>Arithmetic Left Shift ×1</td>
+        <td>–24 = <span class="bit negative">11101000</span></td>
+        <td>→ <span class="bit negative">11010000</span></td>
+        <td>–48</td>
+    </tr>
+
+    <tr>
+        <td>Arithmetic Right Shift ×1 (÷2)</td>
+        <td>+25 = <span class="bit positive">00011001</span></td>
+        <td>→ <span class="bit positive">00001100</span></td>
+        <td>+12</td>
+    </tr>
+    <tr>
+        <td>Arithmetic Right Shift ×1</td>
+        <td>–25 = <span class="bit negative">11100111</span></td>
+        <td>→ <span class="bit negative">11110011</span></td>
+        <td>–13 (sign bit copied)</td>
+    </tr>
+
+    <tr>
+        <td>Arithmetic Right Shift ×2 (÷4)</td>
+        <td>–88 = <span class="bit negative">10101000</span></td>
+        <td>→ <span class="bit negative">11101010</span></td>
+        <td>–22</td>
+    </tr>
+</table>
+
+<h2>Critical Difference: Arithmetic vs Logical Right Shift</h2>
+<table>
+    <tr>
+        <th>Original Value</th>
+        <th>Arithmetic Right Shift (SAR)</th>
+        <th>Logical Right Shift (SHR)</th>
+    </tr>
+    <tr>
+        <td>–8 = <span class="bit negative">11111000</span></td>
+        <td>→ <span class="bit negative">11111100</span> = <strong>–4</strong> (Correct)</td>
+        <td>→ <span class="bit positive">01111100</span> = <strong>+124</strong> (Wrong!)</td>
+    </tr>
+</table>
+
+<p class="note">
+    <strong>Rule:</strong> When dividing signed integers by powers of 2, <strong>always use arithmetic right shift (SAR)</strong> — never logical right shift!
+</p>
+
+<h2>Instruction Names in Popular Architectures</h2>
+<ul>
+    <li>x86: <code>SHL</code> / <code>SAL</code> (left), <code>SAR</code> (arithmetic right)</li>
+    <li>ARM: <code>ASL</code>, <code>ASR</code></li>
+    <li>RISC-V: <code>SLL</code> (left), <code>SRA</code> (arithmetic right), <code>SRL</code> (logical right)</li>
+    <li>MIPS: <code>SLL</code>, <code>SRA</code></li>
+</ul>
+
+<div class="summary">
+    Arithmetic Shift in One Sentence:<br>
+    <strong>"Shift left and fill with 0, shift right and fill with the sign bit"</strong><br><br>
+    → Left = multiply by 2  → Right = signed divide by 2 (floor)
+</div>
+
+</body>
+</html>

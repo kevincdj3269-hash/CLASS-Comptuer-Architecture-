@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Modern PC Data Path – Manual + Auto Control (100% Working)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    :root { --bg:#0d1117; --card:#161b22; --text:#c9d1d9; --accent:#58a6ff; --green:#56d364; --red:#ff6b6b; }
+    body { font-family:Segoe UI, system-ui, sans-serif; background:var(--bg); color:var(--text); margin:0; padding:20px; line-height:1.6; }
+    h1 { color:var(--accent); text-align:center; margin-bottom:8px; }
+    .container { max-width:1800px; margin:auto; display:flex; flex-wrap:wrap; gap:25px; }
+    .left { flex:1 1 1000px; }
+    .right { flex:1 1 420px; background:var(--card); padding:25px; border-radius:16px; height:fit-content; }
+    .controls { text-align:center; margin:20px 0; }
+    button { background:var(--green); color:white; border:none; padding:12px 24px; margin:6px; border-radius:10px; cursor:pointer; font-weight:bold; font-size:1em; }
+    button:hover { background:#6fdc79; }
+    button:disabled { background:#555; cursor:not-allowed; opacity:0.6; }
+    button#autoBtn.playing { background:#238636; }
+    button#autoBtn.paused { background:var(--red); }
+    .svg-container { background:#010409; padding:30px; border-radius:16px; box-shadow:0 12px 50px rgba(0,0,0,0.8); overflow:auto; }
+    .step-display { background:#1f2937; padding:25px; border-radius:12px; min-height:300px; font-size:1.1em; }
+    .step-display h3 { margin:0 0 15px 0; color:var(--accent); }
+    .step-counter { color:#79c0ff; font-weight:bold; }
+    .glow { filter: drop-shadow(0 0 25px #58a6ff); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
+    .note { text-align:center; color:#8b949e; margin:15px 0; font-size:0.95em; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="left">
+    <h1>Modern x86 Out-of-Order Data Path<br>
+        <small style="color:#8b949e;">Intel Lunar Lake / AMD Zen 5 – Fully Working Manual Control</small>
+    </h1>
+
+    <div class="controls">
+      <button onclick="loadExample(1)">Example 1: a = b + c</button>
+      <button onclick="loadExample(2)">Example 2: FMA Loop</button>
+      <button onclick="loadExample(3)">Example 3: Branch</button>
+      <button onclick="toggleAuto()" id="autoBtn">Auto Play</button>
+    </div>
+
+    <div class="controls">
+      <button onclick="prevStep()" id="prevBtn" disabled>Previous</button>
+      <button onclick="nextStep()" id="nextBtn" disabled>Next</button>
+      <button onclick="stopAndReset()" style="background:var(--red)">Stop & Reset</button>
+    </div>
+
+    <div class="svg-container">
+<svg id="datapath" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="15" result="blur"/>
+      <feFlood flood-color="#58a6ff" flood-opacity="0.9"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L12,3 z" fill="#58a6ff"/>
+    </marker>
+  </defs>
+
+  <!-- Components -->
+  <g id="frontend" class="comp"><rect x="50"   y="80"  width="600" height="140" rx="20" fill="#ff7b72"/><text x="350" y="155" text-anchor="middle" fill="white" font-size="26" font-weight="bold">Front-End</text></g>
+  <g id="prf"      class="comp"><rect x="80"   y="300" width="340" height="200" rx="20" fill="#58a6ff"/><text x="250" y="400" text-anchor="middle" fill="white" font-size="22" font-weight="bold">PRF + ROB</text></g>
+  <g id="rs"       class="comp"><rect x="480"  y="320" width="280" height="140" rx="20" fill="#d2a8ff"/><text x="620" y="400" text-anchor="middle" fill="white" font-size="22" font-weight="bold">Reservation Station</text></g>
+  <g id="ports"    class="comp"><rect x="820"  y="160" width="480" height="200" rx="20" fill="#79c0ff"/><text x="1060" y="260" text-anchor="middle" fill="white" font-size="24" font-weight="bold">Execution Ports</text></g>
+  <g id="lsu"      class="comp"><rect x="760"  y="430" width="400" height="110" rx="20" fill="#79c0ff"/><text x="960" y="495" text-anchor="middle" fill="white" font-size="22" font-weight="bold">Load/Store Unit</text></g>
+  <g id="l1d"      class="comp"><rect x="870"  y="560" width="180" height="80"  rx="15" fill="#a5d6ff"/><text x="960" y="605" text-anchor="middle" fill="#0d1117" font-size="18">L1D 64 KB</text></g>
+  <g id="l2"       class="comp"><rect x="840"  y="670" width="240" height="80"  rx="15" fill="#ffd43b"/><text x="960" y="715" text-anchor="middle" fill="#0d1117" font-size="18">L2 2 MB</text></g>
+  <g id="l3"       class="comp"><rect x="810"  y="780" width="300" height="90"  rx="15" fill="#ffbe7a"/><text x="960" y="835" text-anchor="middle" fill="#0d1117" font-size="20">L3 64–128 MB</text></g>
+  <g id="memory"   class="comp"><rect x="760"  y="900" width="400" height="100" rx="20" fill="#ff9e58"/><text x="960" y="955" text-anchor="middle" fill="#0d1117" font-size="24" font-weight="bold">DDR5 Memory</text></g>
+
+  <!-- Arrows -->
+  <path d="M650,150 L740,150 L740,380 L760,380" stroke="#58a6ff" stroke-width="6" fill="none" marker-end="url(#arrow)"/>
+  <path d="M420,390 L480,390" stroke="#d2a8ff" stroke-width="6" fill="none" marker-end="url(#arrow)"/>
+  <path d="M760,390 L820,390 L820,260" stroke="#79c0ff" stroke-width="6" fill="none" marker-end="url(#arrow)"/>
+  <path d="M1060,160 L1060,50 L250,50 L250,300" stroke="#79c0ff" stroke-width="6" fill="none" marker-end="url(#arrow)"/>
+  <path d="M960,540 L960,560" stroke="#ffbe7a" stroke-width="7" fill="none" marker-end="url(#arrow)"/>
+  <path d="M960,650 L960,670" stroke="#ffbe7a" stroke-width="7" fill="none" marker-end="url(#arrow)"/>
+  <path d="M960,760 L960,780" stroke="#ffbe7a" stroke-width="7" fill="none" marker-end="url(#arrow)"/>
+  <path d="M960,870 L960,900" stroke="#ffbe7a" stroke-width="7" fill="none" marker-end="url(#arrow)"/>
+</svg>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="step-display" id="steps">
+      <h3>Ready</h3>
+      <p>Choose an example → then use Previous / Next buttons.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// Global state
+let currentExample = null;
+let step = -1;
+let timer = null;
+let autoPlaying = false;
+
+// Example data (very detailed real steps)
+const examples = {
+  1: { name: "Example 1: a = b + c", steps: [
+    {ids:["frontend"], text:"1. Instruction Fetch"},
+    {ids:["frontend"], text:"2. Decode → 1 μop"},
+    {ids:["prf"],      text:"3. Register Renaming"},
+    {ids:["prf"],      text:"4. Allocate ROB entry"},
+    {ids:["rs"],       text:"5. Dispatch to Reservation Station"},
+    {ids:["rs"],       text:"6. Issue when ready"},
+    {ids:["ports"],    text:"7. Execute on ALU"},
+    {ids:["prf"],      text:"8. Write-back result"},
+    {ids:["prf"],      text:"9. Commit (Retire)"}
+  ]},
+  2: { name: "Example 2: FMA Loop", steps: [
+    {ids:["frontend"], text:"1. Fetch VFMADD231PS"},
+    {ids:["lsu","l1d"], text:"2. Load a[i] (512-bit)"},
+    {ids:["lsu","l1d"], text:"3. Load b[i] (512-bit)"},
+    {ids:["prf"],      text:"4. Rename ZMM registers"},
+    {ids:["rs"],       text:"5. Enter RS"},
+    {ids:["ports"],    text:"6. Execute FMA"},
+    {ids:["prf"],      text:"7. Write-back ZMM"},
+    {ids:["prf"],      text:"8. Retire"}
+  ]},
+  3: { name: "Example 3: Conditional Branch", steps: [
+    {ids:["frontend"], text:"1. Fetch branch"},
+    {ids:["frontend"], text:"2. Predict Taken"},
+    {ids:["prf","rs","ports"], text:"3. Speculative execution"},
+    {ids:["ports"],    text:"4. Resolve branch"},
+    {ids:["prf"],      text:"5. Commit or flush"}
+  ]}
+};
+
+function loadExample(n) {
+  stopAndReset();
+  currentExample = examples[n];
+  step = -1;
+  updateButtons();
+  updateDisplay();
+  document.getElementById("nextBtn").disabled = false;
+}
+
+function nextStep() {
+  if (!currentExample || step >= currentExample.steps.length-1) return;
+  step++;
+  applyStep(step);
+  updateButtons();
+  updateDisplay();
+}
+
+function prevStep() {
+  if (!currentExample || step <= 0) return;
+  // remove current highlight
+  currentExample.steps[step].ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.remove("glow");
+  });
+  step--;
+  applyStep(step);
+  updateButtons();
+  updateDisplay();
+}
+
+function applyStep(s) {
+  // clear all first
+  document.querySelectorAll(".comp").forEach(el => el.classList.remove("glow"));
+  // highlight current
+  if (s >= 0) {
+    currentExample.steps[s].ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.classList.add("glow");
+    });
+  }
+}
+
+function updateButtons() {
+  document.getElementById("prevBtn").disabled = (step <= 0);
+  document.getElementById("nextBtn").disabled = (step >= currentExample.steps.length-1);
+}
+
+function updateDisplay() {
+  if (!currentExample || step < 0) {
+    document.getElementById("steps").innerHTML = `<h3>Ready</h3><p>Choose an example and click Next.</p>`;
+    return;
+  }
+  const s = currentExample.steps[step];
+  document.getElementById("steps").innerHTML = `
+    <h3>${currentExample.name}</h3>
+    <p class="step-counter">Step ${step+1} / ${currentExample.steps.length}</p>
+    <p><strong>${s.text}</strong></p>
+  `;
+}
+
+function toggleAuto() {
+  autoPlaying = !autoPlaying;
+  const btn = document.getElementById("autoBtn");
+  btn.textContent = autoPlaying ? "Pause" : "Auto Play";
+  btn.className = autoPlaying ? "paused" : "";
+
+  if (autoPlaying) {
+    timer = setInterval(() => {
+      if (step < currentExample.steps.length-1) {
+        nextStep();
+      } else {
+        toggleAuto(); // auto stop
+      }
+    }, 2800);
+  } else {
+    clearInterval(timer);
+  }
+}
+
+function stopAndReset() {
+  clearInterval(timer);
+  autoPlaying = false;
+  document.getElementById("autoBtn").textContent = "Auto Play";
+  document.getElementById("autoBtn").className = "";
+  document.querySelectorAll(".comp").forEach(el => el.classList.remove("glow"));
+  step = -1;
+  currentExample = null;
+  document.getElementById("prevBtn").disabled = true;
+  document.getElementById("nextBtn").disabled = true;
+  updateDisplay();
+}
+
+// Hover tooltip
+document.querySelectorAll(".comp").forEach(g => {
+  const tips = {frontend:"Fetch/Decode/μop Cache", prf:"Physical Register File + ROB", rs:"Reservation Station", ports:"Execution Ports", lsu:"Load/Store Unit", l1d:"L1 Data Cache", l2:"L2 Cache", l3:"L3 Cache", memory:"DDR5 Memory"};
+  g.style.cursor = "pointer";
+  g.addEventListener("mouseover", () => {
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    t.textContent = tips[g.id];
+    g.appendChild(t);
+  });
+  g.addEventListener("mouseout", () => g.querySelector("title")?.remove());
+});
+</script>
+</body>
+</html>

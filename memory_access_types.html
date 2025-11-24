@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Types of Memory Access Commands</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; background: #f9f9f9; color: #333; }
+        h1, h2 { color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #3498db; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        code { background: #eee; padding: 2px 6px; border-radius: 4px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Two Types of Memory Access Commands</h1>
+        <p>In computer architecture and assembly language, memory access instructions are fundamentally divided into <strong>two categories</strong> based on the direction of data transfer:</p>
+
+        <h2>1. Load (Read from Memory → CPU)</h2>
+        <p>The CPU fetches data from main memory (RAM) and places it into a register or another location.</p>
+        <ul>
+            <li><strong>Purpose:</strong> Bring data into the processor for computation or processing.</li>
+            <li><strong>Common instructions (examples):</strong></li>
+        </ul>
+        <ul>
+            <li>x86: <code>MOV AX, [BX]</code>, <code>MOV EAX, [address]</code></li>
+            <li>ARM: <code>LDR r0, [r1]</code></li>
+            <li>MIPS: <code>LW $t0, offset($s0)</code>, <code>LB</code></li>
+            <li>RISC-V: <code>LW x10, offset(x11)</code>, <code>LD</code>, <code>LB</code></li>
+        </ul>
+
+        <h2>2. Store (Write from CPU → Memory)</h2>
+        <p>The CPU writes data from a register (or immediate value) into main memory.</p>
+        <ul>
+            <li><strong>Purpose:</strong> Save results, update variables, or output data.</li>
+            <li><strong>Common instructions (examples):</strong></li>
+        </ul>
+        <ul>
+            <li>x86: <code>MOV [BX], AX</code>, <code>MOV [address], EAX</code></li>
+            <li>ARM: <code>STR r0, [r1]</code></li>
+            <li>MIPS: <code>SW $t0, offset($s0)</code>, <code>SB</code></li>
+            <li>RISC-V: <code>SW x10, offset(x11)</code>, <code>SD</code>, <code>SB</code></li>
+        </ul>
+
+        <h2>Summary Table</h2>
+        <table>
+            <tr>
+                <th>Type</th>
+                <th>Direction</th>
+                <th>Purpose</th>
+                <th>Typical Instructions</th>
+            </tr>
+            <tr>
+                <td><strong>Load</strong></td>
+                <td>Memory → CPU</td>
+                <td>Read data into processor</td>
+                <td>MOV (from mem), LDR, LW, LD, LB, etc.</td>
+            </tr>
+            <tr>
+                <td><strong>Store</strong></td>
+                <td>CPU → Memory</td>
+                <td>Write data to memory</td>
+                <td>MOV (to mem), STR, SW, SD, SB, etc.</td>
+            </tr>
+        </table>
+
+        <p><strong>Key Point:</strong> Nearly all memory-related instructions in any CPU fall into one of these two categories — you either <strong>load</strong> data from memory or <strong>store</strong> data to memory. This is the foundation of the load-store architecture used in modern processors.</p>
+    </div>
+</body>
+</html>

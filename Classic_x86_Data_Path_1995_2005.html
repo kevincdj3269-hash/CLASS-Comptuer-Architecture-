@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Classic x86 PC Data Path (Pentium Pro / Pentium III Era)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body {
+        background:#000080; /* Windows 95 海軍藍 */
+        color:#ffffff;
+        font-family:"MS Sans Serif", Arial, sans-serif;
+        margin:0; padding:10px;
+        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVQYV2NkYGD4z8DAwMiAJMAMAD4SBx/0v8oBAAAAAElFTkSuQmCC');
+    }
+    h1 { color:#ffff00; text-align:center; font-size:2em; margin:10px; text-shadow:2px 2px #000; }
+    .container { max-width:1700px; margin:auto; display:flex; flex-wrap:wrap; gap:20px; }
+    .left, .right { background:#c0c0c0; border:4px outset #ffffff; padding:15px; }
+    .left { flex:1 1 1000px; }
+    .right { flex:1 1 400px; min-height:500px; }
+    .controls { text-align:center; margin:15px 0; }
+    button {
+        font-family:"MS Sans Serif", Arial;
+        font-weight:bold;
+        background:#c0c0c0;
+        border:2px solid #ffffff;
+        padding:8px 16px;
+        margin:4px;
+        cursor:pointer;
+        box-shadow:2px 2px 4px #000;
+    }
+    button:active { border:2px inset #ffffff; }
+    button:disabled { color:#808080; cursor:default; }
+    .svg-container {
+        background:#000000;
+        padding:20px;
+        border:4px inset #808080;
+        overflow:auto;
+        box-shadow:inset 0 0 20px #00ffff;
+    }
+    .step-display {
+        background:#000080;
+        color:#00ff00;
+        padding:20px;
+        border:4px inset #ffffff;
+        min-height:300px;
+        font-family:"Courier New", monospace;
+        font-size:1.1em;
+        text-shadow:0 0 5px #00ff00;
+    }
+    .glow { filter: drop-shadow(0 0 20px #00ffff); animation:pulse 1.8s infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+    .note { text-align:center; color:#ffff00; font-weight:bold; margin:10px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="left">
+    <h1>經典 x86 資料路徑 (1995–2005)<br>
+        <small style="color:#00ffff;">Pentium Pro → Pentium III → Athlon (K7) 時代</small>
+    </h1>
+
+    <div class="controls">
+      <button onclick="loadExample(1)">範例 1：ADD EAX, [EBX]</button>
+      <button onclick="loadExample(2)">範例 2：MUL ECX</button>
+      <button onclick="loadExample(3)">範例 3：JNZ Loop</button>
+      <button onclick="toggleAuto()" id="autoBtn">自動播放</button>
+    </div>
+
+    <div class="controls">
+      <button onclick="prevStep()" id="prevBtn" disabled>上一步</button>
+      <button onclick="nextStep()" id="nextBtn" disabled>下一步</button>
+      <button onclick="stopAndReset()" style="background:#ff0000;color:#ffff00">停止重置</button>
+    </div>
+
+    <div class="svg-container">
+<svg id="datapath" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feFlood flood-color="#00ffff" flood-opacity="0.9"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L12,3 z" fill="#00ff00"/>
+    </marker>
+  </defs>
+
+  <!-- 經典元件 (1995–2005) -->
+  <g id="ifetch"   class="comp"><rect x="80"   y="80"   width="380" height="120" rx="15" fill="#000080"/><text x="270" y="150" text-anchor="middle" fill="#00ff00" font-size="28" font-weight="bold">Instruction Fetch + Prefetch Buffer</text></g>
+  <g id="idecode"  class="comp"><rect x="520"  y="80"   width="380" height="120" rx="15" fill="#000080"/><text x="710" y="150" text-anchor="middle" fill="#00ff00" font-size="28" font-weight="bold">Instruction Decode (1–3 μops)</text></g>
+  <g id="rat"      class="comp"><rect x="100"  y="280"  width="300" height="160" rx="15" fill="#008080"/><text x="250" y="360" text-anchor="middle" fill="#ffff00" font-size="24" font-weight="bold">Register Alias Table (RAT)</text></g>
+  <g id="rob"      class="comp"><rect x="480"  y="280"  width="300" height="160" rx="15" fill="#008080"/><text x="630" y="360" text-anchor="middle" fill="#ffff00" font-size="24" font-weight="bold">ReOrder Buffer (40–80 entries)</text></g>
+  <g id="rs"       class="comp"><rect x="860"  y="280"  width="340" height="160" rx="15" fill="#800080"/><text x="1030" y="360" text-anchor="middle" fill="#ff00ff" font-size="26" font-weight="bold">Reservation Station (12–20 entries)</text></g>
+  <g id="ieu"      class="comp"><rect x="300"  y="500"  width="280" height="140" rx="15" fill="#800000"/><text x="440" y="570" text-anchor="middle" fill="#ff8080" font-size="24" font-weight="bold">Integer Execution Units</text></g>
+  <g id="fpu"      class="comp"><rect x="680"  y="500"  width="280" height="140" rx="15" fill="#008000"/><text x="820" y="570" text-anchor="middle" fill="#80ff80" font-size="24" font-weight="bold">FPU / MMX</text></g>
+  <g id="agu"      class="comp"><rect x="1060" y="500"  width="280" height="140" rx="15" fill="#000080"/><text x="1200" y="570" text-anchor="middle" fill="#00ffff" font-size="24" font-weight="bold">Address Generation Unit</text></g>
+  <g id="l1d"      class="comp"><rect x="680"  y="700"  width="280" height="100" rx="15" fill="#808000"/><text x="820" y="760" text-anchor="middle" fill="#ffff80" font-size="24" font-weight="bold">L1 Data Cache (8–32 KB)</text></g>
+  <g id="l2"       class="comp"><rect x="1060" y="700"  width="280" height="100" rx="15" fill="#808000"/><text x="1200" y="760" text-anchor="middle" fill="#ffff80" font-size="22">L2 Cache (128–512 KB)</text></g>
+  <g id="bus"      class="comp"><rect x="680"  y="860"  width="680" height="100" rx="15" fill="#400080"/><text x="1020" y="920" text-anchor="middle" fill="#ff00ff" font-size="30" font-weight="bold">Front-Side Bus (66–133 MHz)</text></g>
+
+  <!-- 經典箭頭 -->
+  <path d="M460,140 L520,140" stroke="#00ff00" stroke-width="8" marker-end="url(#arrow)"/>
+  <path d="M710,200 L710,280" stroke="#00ff00" stroke-width="8" marker-end="url(#arrow)"/>
+  <path d="M400,360 L480,360" stroke="#ffff00" stroke-width="8" marker-end="url(#arrow)"/>
+  <path d="M780,360 L860,360" stroke="#ff00ff" stroke-width="8" marker-end="url(#arrow)"/>
+  <path d="M1030,440 L1030,500" stroke="#ff00ff" stroke-width="8" marker-end="url(#arrow)"/>
+  <path d="M1030,640 L1030,700" stroke="#00ffff" stroke-width="8" marker-end="url(#arrow)"/>
+  <path d="M820,800 L820,860" stroke="#ff00ff" stroke-width="10" marker-end="url(#arrow)"/>
+</svg>
+    </div>
+    <p class="note">滑鼠移到元件有提示 • 支援手動上一步 / 下一步 • 復古風格致敬經典年代</p>
+  </div>
+
+  <div class="right">
+    <div class="step-display" id="steps">
+      <h3 style="color:#00ffff;">準備就緒</h3>
+      <p>請先選擇一個範例，再使用「上一步 / 下一步」體驗當年 Pentium Pro 的 Out-of-Order 執行流程！</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// 狀態
+let currentExample = null;
+let step = -1;
+let timer = null;
+let autoPlaying = false;
+
+// 經典範例 (真實 1995–2005 年代流程)
+const examples = {
+  1: { name: "範例 1：ADD EAX, [EBX]", steps: [
+    {ids:["ifetch"],   text:"1. 取指令 (Instruction Fetch)"},
+    {ids:["idecode"],  text:"2. 解碼成 2 個 μops (Load + Add)"},
+    {ids:["rat"],      text:"3. Register Renaming (EAX → P23)"},
+    {ids:["rob"],      text:"4. 分配 ROB 項目"},
+    {ids:["rs"],       text:"5. 進入 Reservation Station"},
+    {ids:["agu","l1d"],text:"6. 計算位址 + Load 從 L1D"},
+    {ids:["ieu"],      text:"7. Integer ALU 執行 ADD"},
+    {ids:["rob"],      text:"8. Write-back → ROB"},
+    {ids:["rob"],      text:"9. In-order Retire → EAX"}
+  ]},
+  2: { name: "範例 2：MUL ECX", steps: [
+    {ids:["ifetch"],   text:"1. 取指令"},
+    {ids:["idecode"],  text:"2. 解碼成多個 μops (P6 時代 MUL 很慢)"},
+    {ids:["rat"],      text:"3. Rename ECX, EAX, EDX"},
+    {ids:["rs"],       text:"4. 進入 RS 等候 (latency ~10 cycles)"},
+    {ids:["ieu"],      text:"5. 送到乘法單元執行"},
+    {ids:["rob"],      text:"6. 多週期完成後 Write-back"},
+    {ids:["rob"],      text:"7. Retire"}
+  ]},
+  3: { name: "範例 3：JNZ Loop (分支)", steps: [
+    {ids:["ifetch"],   text:"1. 取 JNZ 指令"},
+    {ids:["idecode"],  text:"2. 解碼成 Branch μop"},
+    {ids:["rat"],      text:"3. Rename flags"},
+    {ids:["rs"],       text:"4. 進入 RS"},
+    {ids:["ieu"],      text:"5. 檢查 Zero Flag"},
+    {ids:["ifetch"],   text:"6. Branch Predictor 預測 (PPro 早期靜態預測)"},
+    {ids:["rob"],      text:"7. 預測正確 → 繼續；錯誤 → 丟棄後續 μops"}
+  ]}
+};
+
+function loadExample(n) {
+  stopAndReset();
+  currentExample = examples[n];
+  step = -1;
+  updateDisplay();
+  document.getElementById("nextBtn").disabled = false;
+}
+
+function nextStep() {
+  if (!currentExample || step >= currentExample.steps.length-1) return;
+  step++;
+  applyStep(step);
+  updateDisplay();
+  document.getElementById("prevBtn").disabled = false;
+  if (step === currentExample.steps.length-1) document.getElementById("nextBtn").disabled = true;
+}
+
+function prevStep() {
+  if (!currentExample || step <= 0) return;
+  currentExample.steps[step].ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.remove("glow");
+  });
+  step--;
+  applyStep(step);
+  updateDisplay();
+  document.getElementById("nextBtn").disabled = false;
+  if (step === 0) document.getElementById("prevBtn").disabled = true;
+}
+
+function applyStep(s) {
+  document.querySelectorAll(".comp").forEach(el => el.classList.remove("glow"));
+  if (s >= 0) {
+    currentExample.steps[s].ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.classList.add("glow");
+    });
+  }
+}
+
+function updateDisplay() {
+  if (!currentExample || step < 0) {
+    document.getElementById("steps").innerHTML = `<h3 style="color:#00ffff;">準備就緒</h3><p>請先選擇一個範例！</p>`;
+    return;
+  }
+  const s = currentExample.steps[step];
+  document.getElementById("steps").innerHTML = `
+    <h3 style="color:#ffff00;">${currentExample.name}</h3>
+    <p style="color:#00ff00;">第 ${step+1} / ${currentExample.steps.length} 步</p>
+    <p style="font-size:1.3em;">${s.text}</p>
+  `;
+}
+
+function toggleAuto() {
+  autoPlaying = !autoPlaying;
+  const btn = document.getElementById("autoBtn");
+  btn.textContent = autoPlaying ? "暫停" : "自動播放";
+  if (autoPlaying) {
+    timer = setInterval(() => {
+      if (step < currentExample.steps.length-1) nextStep();
+      else toggleAuto();
+    }, 3000);
+  } else clearInterval(timer);
+}
+
+function stopAndReset() {
+  clearInterval(timer);
+  autoPlaying = false;
+  document.getElementById("autoBtn").textContent = "自動播放";
+  document.querySelectorAll(".comp").forEach(el => el.classList.remove("glow"));
+  step = -1;
+  currentExample = null;
+  document.getElementById("prevBtn").disabled = true;
+  document.getElementById("nextBtn").disabled = true;
+  updateDisplay();
+}
+
+// Hover 提示
+document.querySelectorAll(".comp").forEach(g => {
+  const tips = {
+    ifetch:"取指單元 + 16–32 Byte Prefetch Buffer",
+    idecode:"P6 微架構解碼器 (最多 3 μops)",
+    rat:"Register Alias Table (最早的 Register Renaming)",
+    rob:"ReOrder Buffer – 實現精確中斷",
+    rs:"Reservation Station – Out-of-Order 核心",
+    ieu:"Integer Execution Units (2–3 個)",
+    fpu:"x87 FPU + MMX (Pentium III 加入 SSE)",
+    agu:"Address Generation Unit",
+    l1d:"8–32 KB L1 Data Cache",
+    l2:"外部或晶片上 L2 (133 MHz FSB)",
+    bus:"Front-Side Bus (66/100/133 MHz)"
+  };
+  g.style.cursor = "pointer";
+  g.addEventListener("mouseover", () => {
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    t.textContent = tips[g.id];
+    g.appendChild(t);
+  });
+  g.addEventListener("mouseout", () => g.querySelector("title")?.remove());
+});
+</script>
+</body>
+</html>
