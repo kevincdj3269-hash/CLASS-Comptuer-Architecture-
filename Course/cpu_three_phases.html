@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Three Phases of CPU Instruction Execution + 3 Examples</title>
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; line-height: 1.7; margin: 40px; background: #f8f9fa; color: #333; }
+        h1, h2, h3 { color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 14px; text-align: left; }
+        th { background-color: #3498db; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .example { background: #eef5fb; padding: 20px; border-radius: 10px; margin: 25px 0; border-left: 5px solid #3498db; }
+        code { background: #eee; padding: 3px 8px; border-radius: 4px; font-family: Consolas, monospace; }
+        .summary { font-size: 1.1em; font-weight: bold; color: #2c3e50; margin-top: 40px; }
+    </style>
+</head>
+<body>
+
+<h1>The Three Phases of CPU Instruction Execution</h1>
+
+<table>
+    <tr>
+        <th>Phase</th>
+        <th>Name</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>Instruction Fetch (IF)</td>
+        <td>Fetch the next instruction from memory (or instruction cache) and load it into the CPU.</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>Instruction Decode (ID)</td>
+        <td>Decode the instruction, identify the operation, and read required registers.</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>Execute (EX)</td>
+        <td>Perform the actual operation: ALU computation, memory access, branch decision, write back result.</td>
+    </tr>
+</table>
+
+<h2>Three Real Instruction Examples</h2>
+
+<div class="example">
+    <h3>Example 1: ADD R1, R2, R3 (R1 ← R2 + R3)</h3>
+    <table>
+        <tr><th>Phase</th><th>What Happens</th></tr>
+        <tr><td>Fetch</td><td>CPU fetches the instruction <code>ADD R1, R2, R3</code> from memory</td></tr>
+        <tr><td>Decode</td><td>Decoder recognizes ADD operation; destination = R1, sources = R2 & R3</td></tr>
+        <tr><td>Execute</td><td>ALU adds R2 + R3 → result is written back to R1 and flags are updated</td></tr>
+    </table>
+</div>
+
+<div class="example">
+    <h3>Example 2: LW R4, 100(R5) (Load Word: R4 ← Memory[R5 + 100])</h3>
+    <table>
+        <tr><th>Phase</th><th>What Happens</th></tr>
+        <tr><td>Fetch</td><td>CPU fetches the <code>LW R4, 100(R5)</code> instruction</td></tr>
+        <tr><td>Decode</td><td>Recognizes Load-Word; computes address = R5 + 100, destination = R4</td></tr>
+        <tr><td>Execute</td><td>Issues memory read → data from address is loaded into R4</td></tr>
+    </table>
+</div>
+
+<div class="example">
+    <h3>Example 3: BEQ R6, R7, label (Branch if R6 == R7)</h3>
+    <table>
+        <tr><th>Phase</th><th>What Happens</th></tr>
+        <tr><td>Fetch</td><td>CPU fetches the <code>BEQ R6, R7, label</code> instruction</td></tr>
+        <tr><td>Decode</td><td>Recognizes conditional branch; needs to compare R6 and R7</td></tr>
+        <tr><td>Execute</td><td>Compares R6 == R7<br>→ If equal: PC = label address<br>→ If not equal: PC = PC + 4 (next instruction)</td></tr>
+    </table>
+</div>
+
+<p class="summary">
+    Summary: Every instruction in every CPU (x86, ARM, RISC-V, etc.) goes through exactly these three fundamental phases:<br>
+    <strong>Fetch → Decode → Execute</strong>
+</p>
+
+</body>
+</html>
