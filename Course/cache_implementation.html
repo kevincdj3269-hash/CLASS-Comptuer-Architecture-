@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Implementation: Direct Mapping</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #1e1e1e; /* Dark mode for technical feel */
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        h2 { margin-bottom: 5px; color: #4fc3f7; }
+        p { margin-top: 0; color: #aaa; font-size: 14px; }
+
+        .container {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        input {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background: #333;
+            color: white;
+            font-family: monospace;
+            width: 60px;
+            text-align: center;
+        }
+
+        button {
+            padding: 8px 20px;
+            background-color: #00e676;
+            color: #000;
+            border: none;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled { background-color: #555; color: #888; cursor: not-allowed; }
+        button:hover:not(:disabled) { background-color: #00c853; }
+
+        /* SVG Styles */
+        svg {
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 8px;
+        }
+
+        .box { fill: #37474f; stroke: #90a4ae; stroke-width: 2; }
+        .box-title { fill: #eceff1; font-weight: bold; font-size: 14px; pointer-events: none; }
+        .label { fill: #b0bec5; font-size: 12px; pointer-events: none; }
+        .data-text { fill: #81d4fa; font-family: monospace; font-size: 12px; }
+
+        /* Animation Classes */
+        .highlight-index { fill: #ffeb3b !important; transition: fill 0.3s; } /* Yellow */
+        .highlight-tag { fill: #f48fb1 !important; transition: fill 0.3s; }   /* Pink */
+        .highlight-hit { stroke: #00e676 !important; stroke-width: 4; }       /* Green Border */
+        .highlight-miss { stroke: #ff1744 !important; stroke-width: 4; }      /* Red Border */
+        
+        .fade-in { opacity: 0; transition: opacity 0.5s; }
+        .visible { opacity: 1; }
+        
+        .path-line { stroke: #555; stroke-width: 2; fill: none; }
+        .active-path { stroke: #00e676; stroke-width: 3; stroke-dasharray: 5; animation: dash 1s linear infinite; }
+
+        @keyframes dash { to { stroke-dashoffset: -10; } }
+
+        .log-panel {
+            margin-top: 15px;
+            height: 30px;
+            color: #ffcc80;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Direct Mapped Cache Implementation</h2>
+        <p>Simulation of a 4-Block Cache System</p>
+
+        <div class="controls">
+            <label>Memory Address (0-15): </label>
+            <input type="number" id="addr-input" min="0" max="15" value="6">
+            <button onclick="requestAddress()" id="btn-req">Read Address</button>
+        </div>
+
+        <div class="log-panel" id="status-log">System Idle.</div>
+
+        <svg viewBox="0 0 600 350" width="100%" height="auto">
+            <g transform="translate(20, 20)">
+                <text x="0" y="15" fill="white" font-weight="bold">1. CPU Request</text>
+                
+                <rect x="0" y="30" width="60" height="40" fill="#333" stroke="#f48fb1" stroke-width="2" id="box-tag"/>
+                <text x="30" y="55" text-anchor="middle" class="data-text" id="disp-tag">00</text>
+                <text x="30" y="85" text-anchor="middle" class="label" fill="#f48fb1">Tag</text>
+
+                <rect x="60" y="30" width="60" height="40" fill="#333" stroke="#ffeb3b" stroke-width="2" id="box-index"/>
+                <text x="90" y="55" text-anchor="middle" class="data-text" id="disp-index">00</text>
+                <text x="90" y="85" text-anchor="middle" class="label" fill="#ffeb3b">Index</text>
+            </g>
+
+            <g transform="translate(180, 20)">
+                <text x="50" y="15" fill="white" font-weight="bold">2. Cache Memory (4 Lines)</text>
+                
+                <text x="10" y="40" class="label">Idx</text>
+                <text x="50" y="40" class="label">Valid</text>
+                <text x="100" y="40" class="label">Tag</text>
+                <text x="160" y="40" class="label">Data Block</text>
+
+                <g id="cache-line-0" transform="translate(0, 50)">
+                    <rect x="0" y="0" width="220" height="30" class="box" />
+                    <text x="15" y="20" class="data-text">00</text>
+                    <text x="60" y="20" class="data-text" id="val-0">0</text>
+                    <text x="110" y="20" class="data-text" id="tag-0">-</text>
+                    <text x="170" y="20" class="data-text" id="dat-0">Empty</text>
+                </g>
+                <g id="cache-line-1" transform="translate(0, 85)">
+                    <rect x="0" y="0" width="220" height="30" class="box" />
+                    <text x="15" y="20" class="data-text">01</text>
+                    <text x="60" y="20" class="data-text" id="val-1">0</text>
+                    <text x="110" y="20" class="data-text" id="tag-1">-</text>
+                    <text x="170" y="20" class="data-text" id="dat-1">Empty</text>
+                </g>
+                <g id="cache-line-2" transform="translate(0, 120)">
+                    <rect x="0" y="0" width="220" height="30" class="box" />
+                    <text x="15" y="20" class="data-text">10</text>
+                    <text x="60" y="20" class="data-text" id="val-2">0</text>
+                    <text x="110" y="20" class="data-text" id="tag-2">-</text>
+                    <text x="170" y="20" class="data-text" id="dat-2">Empty</text>
+                </g>
+                <g id="cache-line-3" transform="translate(0, 155)">
+                    <rect x="0" y="0" width="220" height="30" class="box" />
+                    <text x="15" y="20" class="data-text">11</text>
+                    <text x="60" y="20" class="data-text" id="val-3">0</text>
+                    <text x="110" y="20" class="data-text" id="tag-3">-</text>
+                    <text x="170" y="20" class="data-text" id="dat-3">Empty</text>
+                </g>
+            </g>
+
+            <g transform="translate(450, 20)">
+                <text x="20" y="15" fill="white" font-weight="bold">3. Main RAM</text>
+                <rect x="0" y="30" width="120" height="160" fill="#263238" stroke="#546e7a" stroke-width="2" />
+                <text x="60" y="110" text-anchor="middle" fill="#78909c" font-size="12">Huge Storage</text>
+                <rect id="ram-active" x="10" y="140" width="100" height="30" fill="#00e676" opacity="0" />
+                <text x="60" y="160" text-anchor="middle" fill="#000" font-weight="bold" id="ram-text" opacity="0">Data Found</text>
+            </g>
+
+            <path d="M 120 50 L 150 50 L 150 120 L 170 120" class="path-line" id="path-index" />
+            
+            <path d="M 400 120 L 425 120 L 425 100 L 440 100" class="path-line" id="path-miss" stroke-dasharray="4" />
+
+            <circle cx="290" cy="250" r="20" fill="#2d2d2d" stroke="#555" stroke-width="3" id="status-circle" />
+            <text x="290" y="255" text-anchor="middle" fill="white" font-size="10" id="status-text-circle">?</text>
+        </svg>
+    </div>
+
+    <script>
+        // --- Cache State (Software Model) ---
+        // Cache size 4. Index bits = 2 (00, 01, 10, 11).
+        const cache = [
+            { valid: 0, tag: null, data: null },
+            { valid: 0, tag: null, data: null },
+            { valid: 0, tag: null, data: null },
+            { valid: 0, tag: null, data: null }
+        ];
+
+        // --- UI Helpers ---
+        const log = (msg) => document.getElementById('status-log').innerText = msg;
+        const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+        function decToBin(dec, len) {
+            return (dec >>> 0).toString(2).padStart(len, '0');
+        }
+
+        async function requestAddress() {
+            const btn = document.getElementById('btn-req');
+            const input = document.getElementById('addr-input');
+            const addrVal = parseInt(input.value);
+
+            if (isNaN(addrVal) || addrVal < 0 || addrVal > 15) {
+                alert("Please enter address 0-15");
+                return;
+            }
+
+            // Lock UI
+            btn.disabled = true;
+            resetVisuals();
+
+            // 1. Calculate Bits
+            // Address (4 bits) = Tag (2 bits) | Index (2 bits)
+            const bin = decToBin(addrVal, 4);
+            const tagBin = bin.substring(0, 2);
+            const indexBin = bin.substring(2, 4);
+            const indexDec = parseInt(indexBin, 2);
+
+            document.getElementById('disp-tag').innerText = tagBin;
+            document.getElementById('disp-index').innerText = indexBin;
+
+            log(`CPU requests Address ${addrVal} (${bin})...`);
+            await delay(800);
+
+            // 2. Identify Index
+            log(`Extracting Index: ${indexBin} -> Checking Line ${indexDec}`);
+            document.getElementById('box-index').classList.add('highlight-index');
+            document.getElementById('path-index').classList.add('active-path');
+            
+            // Adjust path Y position based on index to make it look connected
+            // (Simplified visual connection)
+            
+            await delay(800);
+
+            // Highlight the specific cache row
+            const rowId = `cache-line-${indexDec}`;
+            const rowEl = document.getElementById(rowId).querySelector('rect');
+            rowEl.classList.add('highlight-index'); // Yellow highlight
+            await delay(800);
+
+            // 3. Check Tag
+            log(`Checking Tag: Is Cache Tag == ${tagBin} AND Valid == 1?`);
+            document.getElementById('box-tag').classList.add('highlight-tag');
+            
+            const cacheLine = cache[indexDec];
+            const tagTextId = `tag-${indexDec}`;
+            document.getElementById(tagTextId).style.fill = "#f48fb1"; // Highlight tag text in table
+            
+            await delay(1000);
+
+            // 4. Hit or Miss Logic
+            const statusCircle = document.getElementById('status-circle');
+            const statusText = document.getElementById('status-text-circle');
+
+            if (cacheLine.valid === 1 && cacheLine.tag === tagBin) {
+                // --- CACHE HIT ---
+                log("CACHE HIT! Data returned to CPU instantly.");
+                rowEl.classList.remove('highlight-index');
+                rowEl.classList.add('highlight-hit'); // Green border
+                
+                statusCircle.setAttribute("fill", "#00e676");
+                statusText.textContent = "HIT";
+                
+                document.getElementById('path-index').classList.remove('active-path');
+                document.getElementById('path-index').style.stroke = "#00e676"; // Green path
+            } else {
+                // --- CACHE MISS ---
+                log("CACHE MISS! Fetching from RAM...");
+                rowEl.classList.remove('highlight-index');
+                rowEl.classList.add('highlight-miss'); // Red border
+                
+                statusCircle.setAttribute("fill", "#ff1744");
+                statusText.textContent = "MISS";
+
+                await delay(1000);
+
+                // Fetch RAM animation
+                document.getElementById('path-miss').classList.add('active-path');
+                document.getElementById('ram-active').style.opacity = 1;
+                document.getElementById('ram-text').style.opacity = 1;
+                
+                log("Reading data from Main Memory...");
+                await delay(1500);
+
+                // Update Cache
+                log("Updating Cache Line with new Data & Tag.");
+                cache[indexDec].valid = 1;
+                cache[indexDec].tag = tagBin;
+                cache[indexDec].data = `Data[${addrVal}]`;
+
+                // Update DOM text
+                document.getElementById(`val-${indexDec}`).textContent = "1";
+                document.getElementById(`tag-${indexDec}`).textContent = tagBin;
+                document.getElementById(`dat-${indexDec}`).textContent = `Data[${addrVal}]`;
+                
+                // Flash Green to show update
+                rowEl.classList.remove('highlight-miss');
+                rowEl.classList.add('highlight-hit');
+                
+                document.getElementById('ram-active').style.opacity = 0;
+                document.getElementById('ram-text').style.opacity = 0;
+                document.getElementById('path-miss').classList.remove('active-path');
+            }
+
+            await delay(1000);
+            log("Operation Complete.");
+            btn.disabled = false;
+        }
+
+        function resetVisuals() {
+            // Remove all dynamic classes
+            document.querySelectorAll('.highlight-index').forEach(e => e.classList.remove('highlight-index'));
+            document.querySelectorAll('.highlight-tag').forEach(e => e.classList.remove('highlight-tag'));
+            document.querySelectorAll('.highlight-hit').forEach(e => e.classList.remove('highlight-hit'));
+            document.querySelectorAll('.highlight-miss').forEach(e => e.classList.remove('highlight-miss'));
+            document.querySelectorAll('.active-path').forEach(e => e.classList.remove('active-path'));
+            
+            // Reset colors
+            document.querySelectorAll('.data-text').forEach(e => e.style.fill = "#81d4fa");
+            document.getElementById('path-index').style.stroke = "#555";
+            
+            document.getElementById('status-circle').setAttribute("fill", "#2d2d2d");
+            document.getElementById('status-text-circle').textContent = "?";
+        }
+    </script>
+</body>
+</html>

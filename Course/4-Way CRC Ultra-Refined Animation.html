@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-Way CRC: Ultra-Refined Animation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1a1a1a;
+            line-height: 1.8;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1250px;
+            margin: auto;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #1565c0;
+            margin-bottom: 15px;
+            font-size: 2.3em;
+            font-weight: 700;
+        }
+        h2 {
+            color: #0d47a1;
+            border-bottom: 3px solid #90caf9;
+            padding-bottom: 12px;
+            margin-top: 40px;
+            font-size: 1.7em;
+        }
+        p, li {
+            font-size: 1.05em;
+        }
+        .highlight {
+            background: #fff3e0;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #ef6c00;
+        }
+        .code {
+            background: #f8f9fa;
+            border-left: 5px solid #1565c0;
+            padding: 14px 18px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            margin: 18px 0;
+            border-radius: 0 10px 10px 0;
+            overflow-x: auto;
+            font-size: 0.95em;
+            color: #424242;
+        }
+        .architecture-diagram {
+            text-align: center;
+            margin: 50px 0;
+            padding: 30px;
+            background: #f5fbff;
+            border-radius: 14px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 30px;
+            font-size: 0.95em;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            border: 1.5px solid #aaa;
+        }
+        svg {
+            width: 100%;
+            max-width: 1150px;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            background: #fdfdff;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        .note {
+            font-size: 0.92em;
+            color: #555;
+            font-style: italic;
+            text-align: center;
+            margin-top: 35px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            border-left: 4px solid #1e88e5;
+        }
+        .tag {
+            font-family: monospace;
+            font-weight: bold;
+            fill: #d84315;
+        }
+        .state {
+            font-family: monospace;
+            font-size: 10px;
+            fill: #2e7d32;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background: #1e88e5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        button:hover:not(:disabled) {
+            background: #1565c0;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        #step-description {
+            font-size: 1.1em;
+            color: #0d47a1;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: 600;
+            transition: opacity 0.5s ease;
+            opacity: 1;
+        }
+        .step-counter {
+            text-align: center;
+            font-size: 1.2em;
+            color: #1565c0;
+            margin: 12px 0;
+            font-weight: bold;
+        }
+        .progress-bar {
+            width: 60%;
+            height: 8px;
+            background: #e0e0e0;
+            margin: 15px auto;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #1e88e5, #42a5f5, #29b6f6);
+            border-radius: 4px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(30, 136, 229, 0.4);
+        }
+        .glow {
+            filter: drop-shadow(0 0 8px rgba(255, 87, 34, 0.6));
+        }
+        .pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>4-Way CRC: Ultra-Refined Animation</h1>
+    <p style="text-align:center; color:#424242; font-size:1.15em; margin-bottom:30px;">
+        A Compact 2-Socket Cache Coherence Framework with <strong>10 Ultra-Refined Steps</strong> using <em>Cubic Bézier Paths, SMIL Easing, Glow Effects, and Fluid Transitions</em>
+    </p>
+
+    <h2>1. Overview of 4-Way Set-Associative Cache</h2>
+    <p>
+        <strong>4-Way Set-Associative Cache</strong> is a balanced cache organization used in embedded, mobile, and power-efficient server processors. Each cache set contains exactly <strong>4 cache lines (ways)</strong>, offering moderate associativity with low power and area overhead.
+    </p>
+    <div class="code">
+        Memory Address = [ <span class="highlight">Tag</span> | <span class="highlight">Set Index</span> | <span class="highlight">Block Offset</span> ]<br>
+        Cache Line to One of 4 ways in Set[Index]
+    </div>
+
+    <h2>2. 2-Socket Collective Relational Cache (CRC) with 4-Way Design</h2>
+    <p>
+        The <strong>4-Way CRC Architecture</strong> extends the relational cache concept to dual-socket systems where each CPU has a <strong>4-way set-associative L3 cache</strong>. Instead of isolated caches, both sockets form a <strong>logically collective relational pool</strong>.
+    </p>
+
+    <h2>3. Relational Cache Line Metadata (4-Way)</h2>
+    <p>Extended metadata per cache line:</p>
+    <div class="code">
+        [ Global Tag | Set Index | Owner ID (2-bit) | Rel-State (2-bit) | Valid | Dirty | GLRU (2-bit) ]
+    </div>
+
+    <div class="architecture-diagram">
+        <h2 style="margin-top:0; color:#0d47a1;">Ultra-Refined 10-Step Animation</h2>
+
+        <svg id="animation-svg" viewBox="0 0 1150 720" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1150" height="720" fill="#fdfdff"/>
+
+            <!-- Socket 0 -->
+            <g id="socket0">
+                <rect x="60" y="80" width="420" height="540" rx="20" fill="#e8f5ff" stroke="#1e88e5" stroke-width="4"/>
+                <text x="270" y="125" font-size="24" font-weight="bold" fill="#0d47a1" text-anchor="middle">Socket 0</text>
+                <text x="270" y="155" font-size="18" fill="#1565c0" text-anchor="middle">L3: 16MB, 4-Way Set-Associative</text>
+
+                <!-- Set 0x5F -->
+                <rect x="110" y="190" width="320" height="60" rx="10" fill="#bbdefb" stroke="#42a5f5" stroke-width="3"/>
+                <text x="270" y="225" font-size="17" fill="#0d47a1" text-anchor="middle" font-weight="bold">Set Index = 0x5F</text>
+
+                <!-- 4 Ways -->
+                <g id="s0-ways">
+                    <rect id="s0-way0" x="140" y="280" width="60" height="60" rx="8" fill="#e3f2fd" stroke="#64b5f6" stroke-width="2">
+                        <animate attributeName="fill" values="#e3f2fd;#fff9c4;#ffcdd2;#e3f2fd" dur="2.4s" begin="indefinite" fill="freeze" id="s0-way0-anim"/>
+                    </rect>
+                    <text x="170" y="310" font-size="12" text-anchor="middle" fill="#1976d2">Way 0</text>
+                    <text id="s0-tag0" x="170" y="325" font-size="10" class="tag" text-anchor="middle">0xB3E2</text>
+                    <text id="s0-owner0" x="170" y="340" font-size="9" fill="#d84315" text-anchor="middle">S0</text>
+                    <text id="s0-state0" x="170" y="355" font-size="9" class="state" text-anchor="middle">M</text>
+
+                    <rect id="s0-way1" x="220" y="280" width="60" height="60" rx="8" fill="#ffffff" stroke="#90caf9" stroke-width="2" stroke-dasharray="4,4">
+                        <animate attributeName="fill" values="#ffffff;#e3f2fd" dur="1s" begin="indefinite" fill="freeze" id="s0-way1-anim"/>
+                    </rect>
+                    <text x="250" y="310" font-size="12" text-anchor="middle" fill="#757575">Way 1</text>
+                    <text id="s0-tag1" x="250" y="325" font-size="10" class="tag" text-anchor="middle" opacity="0">
+                        <animate attributeName="opacity" values="0;1" dur="0.8s" begin="indefinite" fill="freeze" id="s0-tag1-anim"/>
+                    </text>
+                    <text id="s0-owner1" x="250" y="340" font-size="9" fill="#d84315" text-anchor="middle" opacity="0">
+                        <animate attributeName="opacity" values="0;1" dur="0.8s" begin="indefinite" fill="freeze" id="s0-owner1-anim"/>
+                    </text>
+                    <text id="s0-state1" x="250" y="355" font-size="9" class="state" text-anchor="middle" opacity="0">
+                        <animate attributeName="opacity" values="0;1" dur="0.8s" begin="indefinite" fill="freeze" id="s0-state1-anim"/>
+                    </text>
+
+                    <rect id="s0-way2" x="300" y="280" width="60" height="60" rx="8" fill="#ffffff" stroke="#90caf9" stroke-width="2" stroke-dasharray="4,4"/>
+                    <text x="330" y="310" font-size="12" text-anchor="middle" fill="#757575">Way 2</text>
+
+                    <rect id="s0-way3" x="380" y="280" width="60" height="60" rx="8" fill="#ffffff" stroke="#90caf9" stroke-width="2" stroke-dasharray="4,4"/>
+                    <text x="410" y="310" font-size="12" text-anchor="middle" fill="#757575">Way 3</text>
+                </g>
+            </g>
+
+            <!-- Socket 1 -->
+            <g id="socket1">
+                <rect x="670" y="80" width="420" height="540" rx="20" fill="#fff8e1" stroke="#fb8c00" stroke-width="4"/>
+                <text x="880" y="125" font-size="24" font-weight="bold" fill="#e65100" text-anchor="middle">Socket 1</text>
+                <text x="880" y="155" font-size="18" fill="#ef6c00" text-anchor="middle">L3: 16MB, 4-Way Set-Associative</text>
+
+                <!-- Set 0x5F -->
+                <rect x="720" y="190" width="320" height="60" rx="10" fill="#ffe0b2" stroke="#ff8f00" stroke-width="3"/>
+                <text x="880" y="225" font-size="17" fill="#e65100" text-anchor="middle" font-weight="bold">Set Index = 0x5F</text>
+
+                <!-- 4 Ways -->
+                <g id="s1-ways">
+                    <rect id="s1-way0" x="750" y="280" width="60" height="60" rx="8" fill="#ffffff" stroke="#ffcc80" stroke-width="2" stroke-dasharray="4,4"/>
+                    <text x="780" y="310" font-size="12" text-anchor="middle" fill="#757575">Way 0</text>
+
+                    <rect id="s1-way1" x="830" y="280" width="60" height="60" rx="8" fill="#ffffff" stroke="#ffcc80" stroke-width="2" stroke-dasharray="4,4"/>
+                    <text x="860" y="310" font-size="12" text-anchor="middle" fill="#757575">Way 1</text>
+
+                    <rect id="s1-way2" x="910" y="280" width="60" height="60" rx="8" fill="#ffecb3" stroke="#ffb74d" stroke-width="2">
+                        <animate attributeName="fill" values="#ffecb3;#c8e6c9;#ffecb3" dur="1.8s" begin="indefinite" fill="freeze" id="s1-way2-anim"/>
+                    </rect>
+                    <text x="940" y="310" font-size="12" text-anchor="middle" fill="#e65100">Way 2</text>
+                    <text id="s1-tag2" x="940" y="325" font-size="10" class="tag" text-anchor="middle">0xA1F0</text>
+                    <text id="s1-owner2" x="940" y="340" font-size="9" fill="#d84315" text-anchor="middle">S1</text>
+                    <text id="s1-state2" x="940" y="355" font-size="9" class="state" text-anchor="middle">M</text>
+
+                    <rect id="s1-way3" x="990" y="280" width="60" height="60" rx="8" fill="#ffffff" stroke="#ffcc80" stroke-width="2" stroke-dasharray="4,4"/>
+                    <text x="1020" y="310" font-size="12" text-anchor="middle" fill="#757575">Way 3</text>
+                </g>
+            </g>
+
+            <!-- CRC Controller -->
+            <rect id="crc-ctrl" x="510" y="20" width="130" height="50" rx="10" fill="#e8f5e9" stroke="#43a047" stroke-width="3">
+                <animate attributeName="fill" values="#e8f5e9;#c8e6c9;#e8f5e9" dur="1.5s" begin="indefinite" fill="freeze" id="crc-anim"/>
+            </rect>
+            <text x="575" y="48" font-size="15" fill="#2e7d32" text-anchor="middle" font-weight="bold">CRC Ctrl</text>
+
+            <!-- Interconnect -->
+            <line id="interconnect-line" x1="480" y1="350" x2="670" y2="350" stroke="#90a4ae" stroke-width="7"/>
+            <line id="data-flow" x1="480" y1="350" x2="670" y2="350" stroke="#29b6f6" stroke-width="4" stroke-dasharray="20" stroke-dashoffset="0" opacity="0">
+                <animate attributeName="opacity" values="0;1" dur="0.6s" begin="indefinite" fill="freeze" id="data-flow-opacity"/>
+                <animate attributeName="stroke-dashoffset" from="0" to="-40" dur="2s" begin="indefinite" repeatCount="indefinite" id="data-flow-anim"/>
+            </line>
+            <text x="575" y="330" font-size="16" fill="#0277bd" text-anchor="middle" font-weight="bold">UPI Link</text>
+
+            <!-- Arrows from CRC -->
+            <path d="M545,70 L250,180" stroke="#43a047" stroke-width="2" fill="none" marker-end="url(#arrow-s)"/>
+            <path d="M605,70 L900,180" stroke="#43a047" stroke-width="2" fill="none" marker-end="url(#arrow-s)"/>
+
+            <!-- Memory -->
+            <rect x="450" y="640" width="250" height="60" rx="12" fill="#d1c4e9" stroke="#7e57c2" stroke-width="3"/>
+            <text x="575" y="675" font-size="18" fill="#4a148c" text-anchor="middle" font-weight="bold">DDR5 Memory</text>
+
+            <!-- Ultra-Refined Motion Paths (Cubic Bézier) -->
+            <path id="access-path" d="
+                M170,305 
+                C 200,250 300,150 375,100 
+                C 450,50 500,30 575,45 
+                C 650,60 750,150 825,200 
+                C 900,250 910,290 940,305
+            " fill="none" stroke="none"/>
+
+            <path id="return-path" d="
+                M940,305 
+                C 910,320 900,340 825,380 
+                C 750,420 650,440 575,350 
+                C 500,260 450,240 375,280 
+                C 300,320 200,310 250,305
+            " fill="none" stroke="none"/>
+
+            <!-- Animation Elements with Glow -->
+            <g id="access-ball-g" class="glow">
+                <circle id="access-ball" r="9" fill="#ff5722" opacity="0">
+                    <animateMotion id="access-motion" dur="3.2s" begin="indefinite" fill="freeze">
+                        <mpath xlink:href="#access-path"/>
+                    </animateMotion>
+                </circle>
+            </g>
+
+            <g id="return-ball-g" class="glow">
+                <circle id="return-ball" r="7" fill="#43a047" opacity="0">
+                    <animateMotion id="return-motion" dur="2.8s" begin="indefinite" fill="freeze">
+                        <mpath xlink:href="#return-path"/>
+                    </animateMotion>
+                </circle>
+            </g>
+
+            <!-- Markers -->
+            <defs>
+                <marker id="arrow-s" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L7,3 z" fill="#90a4ae"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <div class="controls">
+            <button id="prev-btn" disabled>Previous Step</button>
+            <button id="next-btn">Next Step</button>
+            <button id="reset-btn">Reset</button>
+        </div>
+        <div class="step-counter">Step <span id="current-step-num">0</span> / 9</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <p id="step-description">Step 0: Initial State - Core in Socket 0 requests address 0xA1F0 mapping to Set 0x5F</p>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background:#e3f2fd; border-color:#64b5f6;"></div>
+                <span>Occupied Way (Local)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background:#ffecb3; border-color:#ffb74d;"></div>
+                <span>Occupied Way (Remote Hit)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background:#ffffff; border-color:#90caf9; border-style:dashed;"></div>
+                <span>Empty Way</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background:#29b6f6;"></div>
+                <span>Data Flow</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background:#ff5722;"></div>
+                <span>Request Path</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background:#43a047;"></div>
+                <span>Return Path</span>
+            </div>
+        </div>
+    </div>
+
+    <h2>Ultra-Refined 10-Step Flow</h2>
+    <p>Every motion uses <strong>hand-crafted cubic Bézier curves</strong> for natural, fluid movement. Glow, pulse, and fade effects enhance realism.</p>
+    <ol>
+        <li>Core request to Set 0x5F</li>
+        <li>Tag comparison in Way 0</li>
+        <li>Miss detected</li>
+        <li>Request glides to CRC</li>
+        <li>CRC query active</li>
+        <li>Remote hit in Way 2</li>
+        <li>Data flows over UPI</li>
+        <li>Data arrives</li>
+        <li>Insert into Way 1 + Shared state</li>
+        <li>Global LRU updated</li>
+    </ol>
+
+    <p class="note">
+        This is the <strong>most refined version</strong> with cinematic motion, glow effects, and perfect easing.<br>
+        Best in Chrome (full SVG SMIL). No external libraries.
+    </p>
+</div>
+
+<script>
+    let currentStep = 0;
+    const totalSteps = 9;
+
+    const steps = [
+        { description: "Step 0: Initial State - Core in Socket 0 requests address 0xA1F0 mapping to Set 0x5F" },
+        { description: "Step 1: Local 4-way tag comparison begins (Way 0: 0xB3E2 ≠ 0xA1F0)" },
+        { description: "Step 2: Tag mismatch to Cache Miss detected in Socket 0" },
+        { description: "Step 3: Miss signal glides to CRC Controller along refined Bézier path" },
+        { description: "Step 4: CRC Controller queries Relational Tag Directory (pulse effect)" },
+        { description: "Step 5: Remote hit found in Socket 1, Way 2 (glow highlight)" },
+        { description: "Step 6: Data transfer initiated over UPI Link (flowing line with fade-in)" },
+        { description: "Step 7: Data packet arrives at Socket 0 (green ball returns)" },
+        { description: "Step 8: Data inserted into Way 1, state updated to Shared (S)" },
+        { description: "Step 9: Global LRU updated across sockets, coherence complete" }
+    ];
+
+    // DOM Elements
+    const accessBall = document.getElementById('access-ball');
+    const returnBall = document.getElementById('return-ball');
+    const dataFlow = document.getElementById('data-flow');
+    const stepDesc = document.getElementById('step-description');
+    const stepNum = document.getElementById('current-step-num');
+    const progressFill = document.getElementById('progress-fill');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const resetBtn = document.getElementById('reset-btn');
+
+    // Animation elements
+    const accessMotion = document.getElementById('access-motion');
+    const returnMotion = document.getElementById('return-motion');
+    const dataFlowOpacity = document.getElementById('data-flow-opacity');
+    const dataFlowAnim = document.getElementById('data-flow-anim');
+    const crcAnim = document.getElementById('crc-anim');
+    const s0Way0Anim = document.getElementById('s0-way0-anim');
+    const s0Way1Anim = document.getElementById('s0-way1-anim');
+    const s1Way2Anim = document.getElementById('s1-way2-anim');
+    const s0Tag1Anim = document.getElementById('s0-tag1-anim');
+    const s0Owner1Anim = document.getElementById('s0-owner1-anim');
+    const s0State1Anim = document.getElementById('s0-state1-anim');
+
+    function updateUI() {
+        stepNum.textContent = currentStep;
+        stepDesc.textContent = steps[currentStep].description;
+        progressFill.style.width = `${(currentStep / totalSteps) * 100}%`;
+        prevBtn.disabled = currentStep === 0;
+        nextBtn.disabled = currentStep === totalSteps;
+    }
+
+    function resetAllAnimations() {
+        [accessMotion, returnMotion, dataFlowOpacity, dataFlowAnim, crcAnim, s0Way0Anim, s0Way1Anim, s1Way2Anim, s0Tag1Anim, s0Owner1Anim, s0State1Anim].forEach(anim => {
+            if (anim) anim.endElement();
+        });
+
+        accessBall.setAttribute('opacity', '0');
+        returnBall.setAttribute('opacity', '0');
+        dataFlow.setAttribute('opacity', '0');
+        document.getElementById('crc-ctrl').setAttribute('fill', '#e8f5e9');
+        document.getElementById('s0-way0').setAttribute('fill', '#e3f2fd');
+        document.getElementById('s0-way1').setAttribute('fill', '#ffffff');
+        document.getElementById('s1-way2').setAttribute('fill', '#ffecb3');
+        document.getElementById('s0-tag1').setAttribute('opacity', '0');
+        document.getElementById('s0-owner1').setAttribute('opacity', '0');
+        document.getElementById('s0-state1').setAttribute('opacity', '0');
+        document.getElementById('s0-tag1').textContent = '';
+        document.getElementById('s0-owner1').textContent = '';
+        document.getElementById('s0-state1').textContent = '';
+        document.getElementById('s1-state2').textContent = 'M';
+        document.getElementById('s0-state0').textContent = 'M';
+    }
+
+    function resetAnimation() {
+        currentStep = 0;
+        resetAllAnimations();
+        updateUI();
+    }
+
+    function advanceStep() {
+        if (currentStep < totalSteps) {
+            currentStep++;
+            performStep(currentStep);
+        }
+    }
+
+    function previousStep() {
+        if (currentStep > 0) {
+            currentStep--;
+            performStep(currentStep);
+        }
+    }
+
+    function performStep(step) {
+        resetAllAnimations();
+        updateUI();
+
+        switch (step) {
+            case 0: break;
+            case 1: s0Way0Anim.beginElement(); break;
+            case 2:
+                s0Way0Anim.beginElement();
+                setTimeout(() => document.getElementById('s0-way0').setAttribute('fill', '#ffcdd2'), 1200);
+                break;
+            case 3:
+                accessBall.setAttribute('opacity', '1');
+                accessMotion.beginElement();
+                break;
+            case 4:
+                accessBall.setAttribute('opacity', '1');
+                accessMotion.beginElement();
+                setTimeout(() => crcAnim.beginElement(), 1000);
+                break;
+            case 5:
+                accessBall.setAttribute('opacity', '1');
+                accessMotion.beginElement();
+                setTimeout(() => s1Way2Anim.beginElement(), 2000);
+                break;
+            case 6:
+                accessBall.setAttribute('opacity', '1');
+                accessMotion.beginElement();
+                setTimeout(() => {
+                    dataFlowOpacity.beginElement();
+                    dataFlowAnim.beginElement();
+                }, 2200);
+                break;
+            case 7:
+                accessBall.setAttribute('opacity', '1');
+                accessMotion.beginElement();
+                setTimeout(() => {
+                    returnBall.setAttribute('opacity', '1');
+                    returnMotion.beginElement();
+                }, 2400);
+                break;
+            case 8:
+                accessBall.setAttribute('opacity', '1');
+                accessMotion.beginElement();
+                setTimeout(() => {
+                    returnBall.setAttribute('opacity', '1');
+                    returnMotion.beginElement();
+                    setTimeout(() => {
+                        s0Way1Anim.beginElement();
+                        s0Tag1Anim.beginElement();
+                        s0Owner1Anim.beginElement();
+                        s0State1Anim.beginElement();
+                        document.getElementById('s0-tag1').textContent = '0xA1F0';
+                        document.getElementById('s0-owner1').textContent = 'S1';
+                        document.getElementById('s0-state1').textContent = 'S';
+                        document.getElementById('s1-state2').textContent = 'S';
+                    }, 1400);
+                }, 2400);
+                break;
+            case 9:
+                accessBall.setAttribute('opacity', '1');
+                accessMotion.beginElement();
+                setTimeout(() => {
+                    returnBall.setAttribute('opacity', '1');
+                    returnMotion.beginElement();
+                    setTimeout(() => {
+                        s0Way1Anim.beginElement();
+                        s0Tag1Anim.beginElement();
+                        s0Owner1Anim.beginElement();
+                        s0State1Anim.beginElement();
+                        document.getElementById('s0-tag1').textContent = '0xA1F0';
+                        document.getElementById('s0-owner1').textContent = 'S1';
+                        document.getElementById('s0-state1').textContent = 'S';
+                        document.getElementById('s1-state2').textContent = 'S';
+                        setTimeout(() => {
+                            document.getElementById('s0-state0').textContent = 'E';
+                        }, 800);
+                    }, 1400);
+                }, 2400);
+                break;
+        }
+    }
+
+    nextBtn.addEventListener('click', advanceStep);
+    prevBtn.addEventListener('click', previousStep);
+    resetBtn.addEventListener('click', resetAnimation);
+
+    resetAnimation();
+</script>
+</body>
+</html>

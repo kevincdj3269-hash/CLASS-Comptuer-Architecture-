@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>快取更換策略 互動示範</title>
+<style>
+  body {font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; line-height: 1.6;}
+  h1, h2 {text-align:center;}
+  svg {background:#f9f9f9; display:block; margin:20px auto; border:1px solid #ccc;}
+  .controls {text-align:center; margin:20px 0;}
+  select, input, button {padding:8px; margin:5px; font-size:16px;}
+  .stats {background:#e8f5e9; padding:15px; border-radius:8px; margin:20px 0; text-align:center;}
+  #log {background:#fff; border:1px solid #ddd; padding:10px; height:120px; overflow-y:auto; font-family:monospace; font-size:14px;}
+</style>
+</head>
+<body>
+
+<h1>快取更換策略 互動示範</h1>
+<p style="text-align:center;">4-way Set-Associative Cache（1 個 Set，4 條 Line）</p>
+
+<div class="controls">
+  <label>更換策略：
+    <select id="policy">
+      <option value="LRU">LRU (最近最少使用)</option>
+      <option value="FIFO">FIFO (先進先出)</option>
+      <option value="Random">Random (隨機)</option>
+    </select>
+  </label><br><br>
+  <label>存取序列（用空格分隔，如 A B C A D）：<br>
+    <input type="text" id="sequence" value="A B C D A E F A" style="width:300px;">
+  </label><br><br>
+  <button onclick="startDemo()">開始模擬</button>
+  <button onclick="nextStep()" id="nextBtn" disabled>Next Step</button>
+  <button onclick="resetDemo()">重置</button>
+</div>
+
+<div id="log"></div>
+
+<svg id="cacheSvg" width="900" height="300" viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333"/>
+    </marker>
+  </defs>
+
+  <!-- Cache Frame -->
+  <rect x="150" y="50" width="600" height="200" rx="15" fill="#e8f5e9" stroke="#4caf50" stroke-width="2"/>
+  <text x="450" y="35" font-size="20" text-anchor="middle" font-weight="bold">4-Way Set-Associative Cache (1 Set)</text>
+
+  <!-- 4 Cache Lines -->
+  <g id="lines">
+    <rect x="180" y="80" width="120" height="60" rx="8" fill="#fff" stroke="#666"/>
+    <text x="240" y="115" text-anchor="middle" id="tag0">-</text>
+    <rect x="320" y="80" width="120" height="60" rx="8" fill="#fff" stroke="#666"/>
+    <text x="380" y="115" text-anchor="middle" id="tag1">-</text>
+    <rect x="460" y="80" width="120" height="60" rx="8" fill="#fff" stroke="#666"/>
+    <text x="520" y="115" text-anchor="middle" id="tag2">-</text>
+    <rect x="600" y="80" width="120" height="60" rx="8" fill="#fff" stroke="#666"/>
+    <text x="660" y="115" text-anchor="middle" id="tag3">-</text>
+  </g>
+
+  <!-- Labels -->
+  <text x="240" y="165" text-anchor="middle" font-size="14" fill="#555">Line 0</text>
+  <text x="380" y="165" text-anchor="middle" font-size="14" fill="#555">Line 1</text>
+  <text x="520" y="165" text-anchor="middle" font-size="14" fill="#555">Line 2</text>
+  <text x="660" y="165" text-anchor="middle" font-size="14" fill="#555">Line 3</text>
+
+  <!-- CPU & RAM -->
+  <rect x="50" y="100" width="80" height="80" rx="10" fill="#ffeb3b"/>
+  <text x="90" y="145" text-anchor="middle" font-weight="bold">CPU</text>
+  <rect x="770" y="100" width="100" height="80" rx="10" fill="#bbdefb"/>
+  <text x="820" y="145" text-anchor="middle" font-weight="bold">RAM</text>
+</svg>
+
+<div class="stats" id="stats">
+  Hit: <span id="hitCount">0</span> | 
+  Miss: <span id="missCount">0</span> | 
+  Hit Rate: <span id="hitRate">0%</span><br>
+  AMAT = <span id="amat">0</span> cycles (Hit=2, Miss=100)
+</div>
+
+<script>
+// === 狀態變數 ===
+let accesses = [];
+let index = 0;
+let cache = Array(4).fill(null); // 儲存 block ID
+let lruOrder = [];  // LRU: [最舊, ..., 最新]
+let fifoQueue = []; // FIFO: 進隊順序
+let hitCount = 0, missCount = 0;
+const HIT_TIME = 2, MISS_PENALTY = 100;
+
+// DOM
+const log = document.getElementById('log');
+const nextBtn = document.getElementById('nextBtn');
+const policySelect = document.getElementById('policy');
+
+function logMsg(msg, color = '#000') {
+  const div = document.createElement('div');
+  div.textContent = msg;
+  div.style.color = color;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function updateStats() {
+  const total = hitCount + missCount;
+  const rate = total ? (hitCount / total * 100).toFixed(1) : 0;
+  const amat = HIT_TIME + (missCount / total || 0) * MISS_PENALTY;
+  document.getElementById('hitCount').textContent = hitCount;
+  document.getElementById('missCount').textContent = missCount;
+  document.getElementById('hitRate').textContent = rate + '%';
+  document.getElementById('amat').textContent = total ? amat.toFixed(2) : '0';
+}
+
+function highlightLine(i, color) {
+  const rect = document.querySelectorAll('#lines rect')[i];
+  rect.setAttribute('fill', color);
+  setTimeout(() => rect.setAttribute('fill', '#fff'), 800);
+}
+
+function showTag(i, tag) {
+  document.getElementById(`tag${i}`).textContent = tag;
+}
+
+function clearDynamics() {
+  document.querySelectorAll('.dynamic').forEach(el => el.remove());
+}
+
+function addArrow(x1, y1, x2, y2, color, dash = '') {
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const d = `M${x1},${y1} H${x2}`;
+  path.setAttribute('d', d);
+  path.setAttribute('stroke', color);
+  path.setAttribute('stroke-width', '3');
+  if (dash) path.setAttribute('stroke-dasharray', dash);
+  path.setAttribute('marker-end', 'url(#arrow)');
+  path.classList.add('dynamic');
+  document.getElementById('cacheSvg').appendChild(path);
+  setTimeout(() => path.remove(), 1000);
+}
+
+function startDemo() {
+  const seq = document.getElementById('sequence').value.trim().split(/\s+/);
+  if (seq.length === 0) return alert('請輸入存取序列');
+  accesses = seq;
+  index = 0;
+  cache = Array(4).fill(null);
+  lruOrder = [];
+  fifoQueue = [];
+  hitCount = missCount = 0;
+  log.innerHTML = '';
+  clearDynamics();
+  updateStats();
+  nextBtn.disabled = false;
+  logMsg(`開始模擬：策略 = ${policySelect.options[policySelect.selectedIndex].text}`, '#d32f2f');
+  logMsg(`存取序列：${accesses.join(' → ')}`, '#555');
+}
+
+function nextStep() {
+  if (index >= accesses.length) {
+    nextBtn.disabled = true;
+    logMsg('模擬結束！', '#2e7d32');
+    return;
+  }
+
+  const block = accesses[index++];
+  const policy = policySelect.value;
+  let hit = false;
+  let victim = -1;
+
+  // 檢查是否 Hit
+  const pos = cache.indexOf(block);
+  if (pos !== -1) {
+    hit = true;
+    hitCount++;
+    logMsg(`存取 ${block} → HIT (在 Line ${pos})`, '#4caf50');
+    highlightLine(pos, '#c8e6c9');
+    addArrow(130, 140, 180, 140, '#4caf50');
+    showTag(pos, block);
+
+    // 更新 LRU
+    if (policy === 'LRU') {
+      lruOrder = lruOrder.filter(x => x !== pos);
+      lruOrder.push(pos);
+    }
+  } else {
+    missCount++;
+    logMsg(`存取 ${block} → MISS`, '#f44336');
+
+    // 找 victim
+    if (cache.includes(null)) {
+      victim = cache.indexOf(null); // 空位
+      logMsg(`→ 選擇空位 Line ${victim}`, '#1976d2');
+    } else {
+      if (policy === 'LRU') {
+        victim = lruOrder.shift();
+        logMsg(`→ LRU 替換 Line ${victim}`, '#d32f2f');
+      } else if (policy === 'FIFO') {
+        victim = fifoQueue.shift();
+        logMsg(`→ FIFO 替換 Line ${victim}`, '#d32f2f');
+      } else if (policy === 'Random') {
+        victim = Math.floor(Math.random() * 4);
+        logMsg(`→ Random 替換 Line ${victim}`, '#9c27b0');
+      }
+      fifoQueue.push(victim);
+    }
+
+    // 從 RAM 載入
+    addArrow(770, 140, 720, 140, '#f44336', '5,5');
+    setTimeout(() => {
+      cache[victim] = block;
+      showTag(victim, block);
+      highlightLine(victim, '#ffccbc');
+      if (policy === 'LRU') lruOrder.push(victim);
+      if (policy === 'FIFO') fifoQueue.push(victim);
+    }, 300);
+  }
+
+  updateStats();
+}
+
+function resetDemo() {
+  startDemo();
+  index = accesses.length;
+  nextStep();
+  nextBtn.disabled = true;
+}
+</script>
+
+<hr>
+<h2>數學分析：更換策略對 AMAT 影響</h2>
+<div style="background:#fff; padding:15px; border:1px solid #ddd; text-align:center; font-family: serif;">
+  \[
+  \text{AMAT} = t_h + m \times t_m
+  \]
+  <br><br>
+  其中：
+  <ul style="display:inline-block; text-align:left;">
+    <li>\( t_h \): Hit time = 2 cycles</li>
+    <li>\( t_m \): Miss penalty = 100 cycles</li>
+    <li>\( m \): Miss rate = 1 - Hit rate</li>
+  </ul>
+  <p><strong>結論：</strong> 好的更換策略 → ↑ Hit rate → ↓ AMAT</p>
+</div>
+
+</body>
+</html>

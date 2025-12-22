@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Memory Mapping Techniques - With Hit/Miss Examples</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            line-height: 1.7; 
+            margin: 25px; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50;
+            min-height: 100vh;
+        }
+        h1, h2, h3 { color: #2c3e50; }
+        svg { 
+            border: 1px solid #ddd; 
+            margin: 15px 0; 
+            display: block; 
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: #fff;
+            overflow: visible;
+        }
+        button { 
+            margin: 6px 4px; 
+            padding: 10px 16px; 
+            font-size: 15px;
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            font-weight: 600;
+        }
+        button:hover { 
+            background: #2980b9; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        button:active { transform: translateY(0); }
+        button.hit { background: #27ae60; }
+        button.miss { background: #e74c3c; }
+        button.hit:hover { background: #1e8449; }
+        button.miss:hover { background: #c0392b; }
+
+        .controls {
+            margin: 12px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .hidden { visibility: hidden; opacity: 0; }
+        .visible { visibility: visible; opacity: 1; transition: opacity 0.7s ease, transform 0.7s ease; }
+        .fade-in { animation: fadeIn 0.9s ease forwards; }
+        .slide-in-left { animation: slideInLeft 0.9s ease forwards; }
+        .slide-in-right { animation: slideInRight 0.9s ease forwards; }
+        .draw-arrow {
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: drawArrow 1.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .pulse {
+            animation: pulse 1.8s ease-in-out;
+        }
+        .highlight-hit {
+            animation: highlightHit 2s ease-in-out;
+        }
+        .highlight-miss {
+            animation: highlightMiss 2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-60px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(60px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes drawArrow {
+            to { stroke-dashoffset: 0; }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        @keyframes highlightHit {
+            0% { filter: brightness(1); }
+            50% { filter: brightness(1.5); fill: #27ae60; }
+            100% { filter: brightness(1); }
+        }
+        @keyframes highlightMiss {
+            0% { filter: brightness(1); }
+            50% { filter: brightness(1.5); fill: #e74c3c; }
+            100% { filter: brightness(1); }
+        }
+
+        .step-info {
+            background: #e8f6f3;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 15px;
+            border-left: 5px solid #16a085;
+        }
+        .hit-miss-box {
+            display: inline-block;
+            padding: 8px 14px;
+            margin: 6px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: white;
+        }
+        .hit { background: #27ae60; }
+        .miss { background: #e74c3c; }
+        .address-box {
+            background: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-family: monospace;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Cache Memory Mapping Techniques</h1>
+<p style="background:#d1f2eb;padding:14px;border-radius:8px;font-size:16px;">
+    Interactive step-by-step animations with <strong>smooth transitions</strong>, and now including <strong>real cache hit/miss examples</strong> with visual feedback.
+</p>
+
+<h2>Step 1: Introduction to Cache Memory</h2>
+<p>Cache memory is a small, fast memory that stores copies of frequently used data from main memory. A <strong>Cache Hit</strong> occurs when requested data is found in cache. A <strong>Cache Miss</strong> occurs when it's not, requiring a fetch from main memory.</p>
+
+<hr>
+
+<h2>Step 2: Technique 1 - Direct Mapping</h2>
+<h3>Explanation</h3>
+<p>Each main memory block maps to <strong>exactly one</strong> cache line using <code>Line Index = (Block Number) mod (Cache Lines)</code>.</p>
+
+<h3>Example Setup</h3>
+<div class="address-box">Main Memory: 64 blocks (0–63) | Cache: 8 lines (0–7) | Block size: 4 words</div>
+
+<h3>Cache Hit/Miss Examples</h3>
+<div class="step-info">
+    <strong>Scenario:</strong> Cache line 3 contains Block 11 (from previous access).<br>
+    Now access <strong>Block 11</strong> → <span class="hit-miss-box hit">HIT</span><br>
+    Then access <strong>Block 19</strong> (19 mod 8 = 3) → <span class="hit-miss-box miss">MISS</span> (same line, different block)
+</div>
+
+<div class="controls">
+    <button onclick="stepDirect(1)">Step 1: Show Memory</button>
+    <button onclick="stepDirect(2)">Step 2: Load Block 11 (Hit)</button>
+    <button class="miss" onclick="stepDirect(3)">Step 3: Access Block 19 (Miss)</button>
+    <button onclick="resetDirect()">Reset</button>
+</div>
+
+<svg id="direct-svg" width="480" height="380" xmlns="http://www.w3.org/2000/svg" style="background:#fdfdfd;">
+    <!-- Main Memory -->
+    <rect id="main-memory" class="hidden" x="30" y="40" width="130" height="280" fill="#dbe9ff" stroke="#2980b9" stroke-width="2.5" rx="10"/>
+    <text id="main-label" class="hidden" x="95" y="65" font-size="14" fill="#2c3e50" text-anchor="middle" font-weight="bold">Main Memory</text>
+    <text id="block11" class="hidden" x="95" y="130" font-size="12" fill="#2c3e50" text-anchor="middle">Block 11</text>
+    <text id="block19" class="hidden" x="95" y="230" font-size="12" fill="#2c3e50" text-anchor="middle">Block 19</text>
+
+    <!-- Cache -->
+    <rect id="cache" class="hidden" x="300" y="100" width="130" height="180" fill="#d5f5e3" stroke="#27ae60" stroke-width="2.5" rx="10"/>
+    <text id="cache-label" class="hidden" x="365" y="125" font-size="14" fill="#2c3e50" text-anchor="middle" font-weight="bold">Cache</text>
+    <text id="line3" class="hidden" x="365" y="170" font-size="12" fill="#2c3e50" text-anchor="middle">Line 3</text>
+
+    <!-- Hit/Miss Indicators -->
+    <circle id="hit-circle" class="hidden" cx="240" cy="150" r="18" fill="#27ae60"/>
+    <text id="hit-text" class="hidden" x="240" y="156" font-size="14" fill="white" text-anchor="middle" font-weight="bold">HIT</text>
+    <circle id="miss-circle" class="hidden" cx="240" cy="250" r="18" fill="#e74c3c"/>
+    <text id="miss-text" class="hidden" x="240" y="256" font-size="14" fill="white" text-anchor="middle" font-weight="bold">MISS</text>
+
+    <!-- Arrows -->
+    <defs>
+        <marker id="arrow-hit" markerWidth="12" markerHeight="12" refX="11" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L11,3 z" fill="#27ae60"/>
+        </marker>
+        <marker id="arrow-miss" markerWidth="12" markerHeight="12" refX="11" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L11,3 z" fill="#e74c3c"/>
+        </marker>
+    </defs>
+    <path id="arrow-hit-path" class="hidden" d="M160,130 Q220,140 280,160" fill="none" stroke="#27ae60" stroke-width="3" marker-end="url(#arrow-hit)"/>
+    <path id="arrow-miss-path" class="hidden" d="M160,230 Q220,240 280,170" fill="none" stroke="#e74c3c" stroke-width="3" marker-end="url(#arrow-miss)"/>
+</svg>
+
+<hr>
+
+<h2>Step 3: Technique 2 - Fully Associative Mapping</h2>
+<h3>Explanation</h3>
+<p>Any block can go to <strong>any cache line</strong>. Uses full tag comparison. Reduces conflict misses.</p>
+
+<h3>Cache Hit/Miss Example</h3>
+<div class="step-info">
+    Cache contains: Line 0 → Block 5, Line 1 → Block 12<br>
+    Access <strong>Block 12</strong> → <span class="hit-miss-box hit">HIT</span> (tag match in Line 1)<br>
+    Access <strong>Block 30</strong> → <span class="hit-miss-box miss">MISS</span> (no tag match)
+</div>
+
+<div class="controls">
+    <button onclick="stepAssoc(1)">Step 1: Memory</button>
+    <button class="hit" onclick="stepAssoc(2)">Step 2: Hit on Block 12</button>
+    <button class="miss" onclick="stepAssoc(3)">Step 3: Miss on Block 30</button>
+    <button onclick="resetAssoc()">Reset</button>
+</div>
+
+<svg id="assoc-svg" width="480" height="380" xmlns="http://www.w3.org/2000/svg" style="background:#fdfdfd;">
+    <rect id="main-a" class="hidden" x="30" y="40" width="130" height="280" fill="#dbe9ff" stroke="#2980b9" stroke-width="2.5" rx="10"/>
+    <text id="main-a-label" class="hidden" x="95" y="65" font-size="14" fill="#2c3e50" text-anchor="middle" font-weight="bold">Main Memory</text>
+    <text id="b12" class="hidden" x="95" y="140" font-size="12" fill="#2c3e50" text-anchor="middle">Block 12</text>
+    <text id="b30" class="hidden" x="95" y="240" font-size="12" fill="#2c3e50" text-anchor="middle">Block 30</text>
+
+    <rect id="cache-a" class="hidden" x="300" y="100" width="130" height="180" fill="#d5f5e3" stroke="#27ae60" stroke-width="2.5" rx="10"/>
+    <text id="cache-a-label" class="hidden" x="365" y="125" font-size="14" fill="#2c3e50" text-anchor="middle" font-weight="bold">Cache</text>
+    <text id="line0-a" class="hidden" x="335" y="165" font-size="11" fill="#2c3e50">Line 0: Block 5</text>
+    <text id="line1-a" class="hidden" x="335" y="195" font-size="11" fill="#2c3e50">Line 1: Block 12</text>
+
+    <circle id="hit-a-circle" class="hidden" cx="230" cy="160" r="20" fill="#27ae60"/>
+    <text id="hit-a-text" class="hidden" x="230" y="167" font-size="15" fill="white" text-anchor="middle" font-weight="bold">HIT</text>
+    <circle id="miss-a-circle" class="hidden" cx="230" cy="260" r="20" fill="#e74c3c"/>
+    <text id="miss-a-text" class="hidden" x="230" y="267" font-size="15" fill="white" text-anchor="middle" font-weight="bold">MISS</text>
+
+    <defs>
+        <marker id="arrow-a-hit" markerWidth="12" markerHeight="12" refX="11" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L11,3 z" fill="#27ae60"/>
+        </marker>
+        <marker id="arrow-a-miss" markerWidth="12" markerHeight="12" refX="11" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L11,3 z" fill="#e74c3c"/>
+        </marker>
+    </defs>
+    <path id="a-hit" class="hidden" d="M160,140 Q210,150 280,185" fill="none" stroke="#27ae60" stroke-width="3" marker-end="url(#arrow-a-hit)"/>
+    <path id="a-miss" class="hidden" d="M160,240 Q210,250 280,170" fill="none" stroke="#e74c3c" stroke-width="3" marker-end="url(#arrow-a-miss)"/>
+</svg>
+
+<hr>
+
+<h2>Step 4: Technique 3 - 2-Way Set-Associative Mapping</h2>
+<h3>Explanation</h3>
+<p>Cache divided into sets. Each set has 2 lines (ways). Block maps to set using index, but can go to any way in that set.</p>
+
+<h3>Cache Hit/Miss Example</h3>
+<div class="step-info">
+    Set 1 contains: Way 0 → Block 9, Way 1 → Block 17<br>
+    Access <strong>Block 17</strong> → <span class="hit-miss-box hit">HIT</span> (in Set 1, Way 1)<br>
+    Access <strong>Block 25</strong> (25 mod 4 = 1) → <span class="hit-miss-box miss">MISS</span> (Set 1, no match)
+</div>
+
+<div class="controls">
+    <button onclick="stepSet(1)">Step 1: Memory</button>
+    <button onclick="stepSet(2)">Step 2: Show Sets</button>
+    <button class="hit" onclick="stepSet(3)">Step 3: Hit on Block 17</button>
+    <button class="miss" onclick="stepSet(4)">Step 4: Miss on Block 25</button>
+    <button onclick="resetSet()">Reset</button>
+</div>
+
+<svg id="set-svg" width="480" height="400" xmlns="http://www.w3.org/2000/svg" style="background:#fdfdfd;">
+    <rect id="main-s" class="hidden" x="30" y="50" width="130" height="280" fill="#dbe9ff" stroke="#2980b9" stroke-width="2.5" rx="10"/>
+    <text id="main-s-label" class="hidden" x="95" y="75" font-size="14" fill="#2c3e50" text-anchor="middle" font-weight="bold">Main Memory</text>
+    <text id="b17" class="hidden" x="95" y="160" font-size="12" fill="#2c3e50" text-anchor="middle">Block 17</text>
+    <text id="b25" class="hidden" x="95" y="260" font-size="12" fill="#2c3e50" text-anchor="middle">Block 25</text>
+
+    <!-- Set 1 -->
+    <rect id="set1-box" class="hidden" x="300" y="120" width="130" height="80" fill="#d5f5e3" stroke="#27ae60" stroke-width="2.5" rx="8"/>
+    <text id="set1-title" class="hidden" x="365" y="140" font-size="13" fill="#2c3e50" text-anchor="middle" font-weight="bold">Set 1</text>
+    <text id="way0-s" class="hidden" x="335" y="165" font-size="11" fill="#27ae60">Way 0: Block 9</text>
+    <text id="way1-s" class="hidden" x="335" y="185" font-size="11" fill="#27ae60">Way 1: Block 17</text>
+
+    <circle id="hit-s-circle" class="hidden" cx="230" cy="180" r="20" fill="#27ae60"/>
+    <text id="hit-s-text" class="hidden" x="230" y="187" font-size="15" fill="white" text-anchor="middle" font-weight="bold">HIT</text>
+    <circle id="miss-s-circle" class="hidden" cx="230" y="280" r="20" fill="#e74c3c"/>
+    <text id="miss-s-text" class="hidden" x="230" y="287" font-size="15" fill="white" text-anchor="middle" font-weight="bold">MISS</text>
+
+    <defs>
+        <marker id="arrow-s-hit" markerWidth="12" markerHeight="12" refX="11" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L11,3 z" fill="#27ae60"/>
+        </marker>
+        <marker id="arrow-s-miss" markerWidth="12" markerHeight="12" refX="11" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L11,3 z" fill="#e74c3c"/>
+        </marker>
+    </defs>
+    <path id="s-hit" class="hidden" d="M160,160 Q210,170 280,180" fill="none" stroke="#27ae60" stroke-width="3" marker-end="url(#arrow-s-hit)"/>
+    <path id="s-miss" class="hidden" d="M160,260 Q210,270 280,170" fill="none" stroke="#e74c3c" stroke-width="3" marker-end="url(#arrow-s-miss)"/>
+</svg>
+
+<script>
+    function showWithEffect(id, effect = 'fade-in') {
+        const el = document.getElementById(id);
+        el.classList.remove('hidden');
+        el.classList.add('visible', effect);
+        setTimeout(() => el.classList.remove(effect), 1000);
+    }
+
+    function drawLine(id, color = null) {
+        const line = document.getElementById(id);
+        line.classList.remove('hidden');
+        line.classList.add('draw-arrow');
+        if (color) line.style.stroke = color;
+    }
+
+    function showHitMiss(circleId, textId, arrowId) {
+        showWithEffect(circleId, 'fade-in');
+        showWithEffect(textId, 'fade-in');
+        drawLine(arrowId);
+    }
+
+    // Direct Mapping
+    function stepDirect(step) {
+        switch(step) {
+            case 1:
+                showWithEffect('main-memory', 'slide-in-left');
+                showWithEffect('main-label', 'fade-in');
+                showWithEffect('block11', 'fade-in');
+                showWithEffect('block19', 'fade-in');
+                showWithEffect('cache', 'slide-in-right');
+                showWithEffect('cache-label', 'fade-in');
+                showWithEffect('line3', 'fade-in');
+                break;
+            case 2:
+                showHitMiss('hit-circle', 'hit-text', 'arrow-hit-path');
+                document.getElementById('line3').classList.add('highlight-hit');
+                break;
+            case 3:
+                showHitMiss('miss-circle', 'miss-text', 'arrow-miss-path');
+                document.getElementById('line3').classList.add('highlight-miss');
+                break;
+        }
+    }
+
+    function resetDirect() {
+        const ids = ['main-memory','main-label','block11','block19','cache','cache-label','line3',
+                     'hit-circle','hit-text','miss-circle','miss-text','arrow-hit-path','arrow-miss-path'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.add('hidden');
+            el.classList.remove('visible','draw-arrow','highlight-hit','highlight-miss');
+        });
+    }
+
+    // Fully Associative
+    function stepAssoc(step) {
+        switch(step) {
+            case 1:
+                showWithEffect('main-a', 'slide-in-left');
+                showWithEffect('main-a-label', 'fade-in');
+                showWithEffect('b12', 'fade-in');
+                showWithEffect('b30', 'fade-in');
+                showWithEffect('cache-a', 'slide-in-right');
+                showWithEffect('cache-a-label', 'fade-in');
+                showWithEffect('line0-a', 'fade-in');
+                showWithEffect('line1-a', 'fade-in');
+                break;
+            case 2:
+                showHitMiss('hit-a-circle', 'hit-a-text', 'a-hit');
+                document.getElementById('line1-a').classList.add('highlight-hit');
+                break;
+            case 3:
+                showHitMiss('miss-a-circle', 'miss-a-text', 'a-miss');
+                break;
+        }
+    }
+
+    function resetAssoc() {
+        const ids = ['main-a','main-a-label','b12','b30','cache-a','cache-a-label','line0-a','line1-a',
+                     'hit-a-circle','hit-a-text','miss-a-circle','miss-a-text','a-hit','a-miss'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.add('hidden');
+            el.classList.remove('visible','draw-arrow','highlight-hit');
+        });
+    }
+
+    // Set-Associative
+    function stepSet(step) {
+        switch(step) {
+            case 1:
+                showWithEffect('main-s', 'slide-in-left');
+                showWithEffect('main-s-label', 'fade-in');
+                showWithEffect('b17', 'fade-in');
+                showWithEffect('b25', 'fade-in');
+                break;
+            case 2:
+                showWithEffect('set1-box', 'slide-in-right');
+                showWithEffect('set1-title', 'fade-in');
+                showWithEffect('way0-s', 'fade-in');
+                showWithEffect('way1-s', 'fade-in');
+                break;
+            case 3:
+                showHitMiss('hit-s-circle', 'hit-s-text', 's-hit');
+                document.getElementById('way1-s').classList.add('highlight-hit');
+                break;
+            case 4:
+                showHitMiss('miss-s-circle', 'miss-s-text', 's-miss');
+                break;
+        }
+    }
+
+    function resetSet() {
+        const ids = ['main-s','main-s-label','b17','b25','set1-box','set1-title','way0-s','way1-s',
+                     'hit-s-circle','hit-s-text','miss-s-circle','miss-s-text','s-hit','s-miss'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.add('hidden');
+            el.classList.remove('visible','draw-arrow','highlight-hit');
+        });
+    }
+</script>
+
+</body>
+</html>

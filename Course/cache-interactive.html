@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Interactive Cache Demo – Step-by-Step Buttons</title>
+<style>
+  body {font-family: Arial, sans-serif; max-width: 960px; margin: 20px auto; line-height: 1.5;}
+  h1, h2 {text-align:center;}
+  svg {background:#fafafa; display:block; margin:20px auto; border:1px solid #ccc;}
+  .controls {text-align:center; margin:20px 0;}
+  button {padding:8px 16px; margin:5px; font-size:16px; cursor:pointer;}
+  .calc {background:#f5f5f5; padding:15px; border-radius:8px; margin:20px 0;}
+  .calc input {width:80px; margin:0 5px; padding:4px;}
+  .result {font-weight:bold; color:#d32f2f; margin-top:10px;}
+  #status {font-style:italic; color:#555; margin-top:10px;}
+</style>
+</head>
+<body>
+
+<h1>Interactive 2-Way Set-Associative Cache Demo</h1>
+
+<svg id="cacheSvg" width="900" height="460" viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333"/>
+    </marker>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/>
+      <feFlood flood-color="#4caf50" flood-opacity="0.6"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- CPU -->
+  <rect x="50" y="180" width="110" height="80" rx="10" fill="#ffeb3b"/>
+  <text x="105" y="225" font-weight="bold" text-anchor="middle">CPU</text>
+
+  <!-- Cache -->
+  <rect x="230" y="80" width="440" height="300" rx="12" fill="#e8f5e9"/>
+  <text x="450" y="55" font-size="20" text-anchor="middle" font-weight="bold">2-Way Set-Associative Cache</text>
+
+  <!-- Set 0 -->
+  <rect x="260" y="110" width="180" height="110" rx="6" fill="#c8e6c9"/>
+  <text x="350" y="135" text-anchor="middle" font-weight="bold">Set 0</text>
+  <rect id="set0line0" x="270" y="150" width="75" height="60" rx="4" fill="#fff" stroke="#666"/>
+  <text x="307.5" y="180" text-anchor="middle">Line 0</text>
+  <rect id="set0line1" x="355" y="150" width="75" height="60" rx="4" fill="#fff" stroke="#666"/>
+  <text x="392.5" y="180" text-anchor="middle">Line 1</text>
+
+  <!-- Set 1 -->
+  <rect x="260" y="240" width="180" height="110" rx="6" fill="#c8e6c9"/>
+  <text x="350" y="265" text-anchor="middle" font-weight="bold">Set 1</text>
+  <rect id="set1line0" x="270" y="280" width="75" height="60" rx="4" fill="#fff" stroke="#666"/>
+  <text x="307.5" y="310" text-anchor="middle">Line 0</text>
+  <rect id="set1line1" x="355" y="280" width="75" height="60" rx="4" fill="#fff" stroke="#666"/>
+  <text x="392.5" y="310" text-anchor="middle">Line 1</text>
+
+  <!-- RAM -->
+  <rect x="720" y="80" width="150" height="300" rx="12" fill="#bbdefb"/>
+  <text x="795" y="115" text-anchor="middle" font-weight="bold">RAM</text>
+  <text x="795" y="150" text-anchor="middle">Block 0</text>
+  <text x="795" y="190" text-anchor="middle">Block 1</text>
+  <text x="795" y="230" text-anchor="middle">Block 2</text>
+  <text x="795" y="270" text-anchor="middle">Block 3</text>
+  <text x="795" y="310" text-anchor="middle">Block 4</text>
+  <text x="795" y="350" text-anchor="middle">…</text>
+
+  <!-- Dynamic elements (paths, texts, etc.) will be added via JS -->
+</svg>
+
+<div class="controls">
+  <button onclick="startHit()">Simulate Hit</button>
+  <button onclick="startMiss()">Simulate Miss</button>
+  <button onclick="nextStep()">Next Step</button>
+  <button onclick="resetDemo()">Reset</button>
+</div>
+<div id="status" style="text-align:center;"></div>
+
+<p style="text-align:center;">
+  <strong>Instructions:</strong> Click "Simulate Hit" or "Simulate Miss", then "Next Step" to advance. Status shows current step.
+</p>
+
+<!-- Performance Calculator -->
+<div class="calc">
+  <h2>Cache Performance Calculator</h2>
+  <p>
+    <label>Hit time (cycles): <input id="hitTime" type="number" value="2" min="1"></label><br><br>
+    <label>Miss penalty (cycles): <input id="missPenalty" type="number" value="100" min="1"></label><br><br>
+    <label>Hit rate (%): <input id="hitRate" type="number" value="95" min="0" max="100"></label>
+    <button onclick="calc()">Calculate AMAT</button>
+  </p>
+  <div class="result" id="result"></div>
+</div>
+
+<h2>Formulas</h2>
+<div style="background:#fff; padding:15px; border:1px solid #ddd; text-align:center;">
+  Hit Rate h = (# Hits) / (# Accesses)<br>
+  Miss Rate m = 1 - h<br>
+  AMAT = Hit time + m × Miss penalty
+</div>
+
+<script>
+let svg = document.getElementById('cacheSvg');
+let status = document.getElementById('status');
+let currentMode = null; // 'hit' or 'miss'
+let step = 0;
+
+function resetDemo() {
+  // Remove dynamic elements
+  let dynamics = svg.querySelectorAll('.dynamic');
+  dynamics.forEach(el => el.remove());
+  // Reset highlights
+  ['set0line0', 'set0line1', 'set1line0', 'set1line1'].forEach(id => {
+    document.getElementById(id).setAttribute('fill', '#fff');
+  });
+  status.innerHTML = 'Reset complete. Choose a simulation.';
+  currentMode = null;
+  step = 0;
+}
+
+function addPath(d, stroke, dash = '', marker = 'url(#arrow)', cls = 'dynamic') {
+  let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', d);
+  path.setAttribute('stroke', stroke);
+  path.setAttribute('stroke-width', '3');
+  if (dash) path.setAttribute('stroke-dasharray', dash);
+  if (marker) path.setAttribute('marker-end', marker);
+  path.setAttribute('fill', 'none');
+  path.classList.add(cls);
+  svg.appendChild(path);
+  return path;
+}
+
+function addText(x, y, text, fill, cls = 'dynamic') {
+  let t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  t.setAttribute('x', x);
+  t.setAttribute('y', y);
+  t.setAttribute('font-size', '14');
+  t.setAttribute('fill', fill);
+  t.textContent = text;
+  t.classList.add(cls);
+  svg.appendChild(t);
+  return t;
+}
+
+function addCircle(cx, cy, r, fill, filter = '', cls = 'dynamic') {
+  let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  circle.setAttribute('cx', cx);
+  circle.setAttribute('cy', cy);
+  circle.setAttribute('r', r);
+  circle.setAttribute('fill', fill);
+  if (filter) circle.setAttribute('filter', filter);
+  circle.classList.add(cls);
+  svg.appendChild(circle);
+  return circle;
+}
+
+function startHit() {
+  resetDemo();
+  currentMode = 'hit';
+  step = 0;
+  status.innerHTML = 'Hit Simulation Started. Click Next Step.';
+}
+
+function startMiss() {
+  resetDemo();
+  currentMode = 'miss';
+  step = 0;
+  status.innerHTML = 'Miss Simulation Started. Click Next Step.';
+}
+
+function nextStep() {
+  if (!currentMode) return status.innerHTML = 'Start a simulation first!';
+
+  step++;
+  if (currentMode === 'hit') {
+    if (step === 1) {
+      addPath('M160,220 H230', '#333');
+      addText(195, 210, 'Request (addr → Set 0)', '#4caf50');
+      status.innerHTML = 'Step 1: CPU requests address (maps to Set 0)';
+    } else if (step === 2) {
+      addCircle(307.5, 180, 30, '#4caf50', 'url(#glow)');
+      addText(307.5, 185, 'HIT', 'white');
+      document.getElementById('set0line0').setAttribute('fill', '#dcedc8'); // Highlight line
+      status.innerHTML = 'Step 2: Lookup → Tag match in Set 0, Line 0 (Hit)';
+    } else if (step === 3) {
+      addPath('M230,220 H160', '#4caf50');
+      addText(195, 240, 'Data returned (fast)', '#4caf50');
+      status.innerHTML = 'Step 3: Return data to CPU (~2 cycles)';
+    } else {
+      status.innerHTML = 'Hit Simulation Complete. Reset to try again.';
+    }
+  } else if (currentMode === 'miss') {
+    if (step === 1) {
+      addPath('M160,250 H230', '#f44336', '6,6');
+      addText(195, 270, 'Request (addr → Set 1)', '#f44336');
+      status.innerHTML = 'Step 1: CPU requests address (maps to Set 1)';
+    } else if (step === 2) {
+      addCircle(392.5, 310, 30, '#f44336');
+      addText(392.5, 315, 'MISS', 'white');
+      status.innerHTML = 'Step 2: Lookup → No match (Miss). Select victim (Line 1, LRU)';
+    } else if (step === 3) {
+      document.getElementById('set1line1').setAttribute('fill', '#ffcdd2'); // Highlight victim
+      addPath('M670,250 H720', '#f44336', '6,6');
+      addText(695, 235, 'Fetch Block 3 from RAM', '#f44336');
+      status.innerHTML = 'Step 3: If dirty, write back victim. Fetch new block from RAM (~100 cycles)';
+    } else if (step === 4) {
+      addPath('M720,300 H670 V280 H355', '#f44336', '6,6'); // To Line 1
+      document.getElementById('set1line1').setAttribute('fill', '#ef9a9a'); // Loaded
+      status.innerHTML = 'Step 4: Load block into victim line, update tag/valid';
+    } else if (step === 5) {
+      addPath('M230,250 H160', '#f44336');
+      addText(195, 290, 'Data returned (slow)', '#f44336');
+      status.innerHTML = 'Step 5: Return data to CPU';
+    } else {
+      status.innerHTML = 'Miss Simulation Complete. Reset to try again.';
+    }
+  }
+}
+
+function calc() {
+  const h = parseFloat(document.getElementById('hitRate').value) / 100;
+  const hitT = parseFloat(document.getElementById('hitTime').value);
+  const missP = parseFloat(document.getElementById('missPenalty').value);
+  const missRate = 1 - h;
+  const amat = hitT + missRate * missP;
+  document.getElementById('result').innerHTML =
+    `Hit rate = ${ (h*100).toFixed(1) }% | Miss rate = ${ (missRate*100).toFixed(1) }%<br>` +
+    `<strong>AMAT = ${amat.toFixed(2)} cycles</strong>`;
+}
+calc(); // Initial
+</script>
+
+</body>
+</html>
